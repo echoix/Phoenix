@@ -96,10 +96,10 @@ Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development :: User Interfaces
 """
 
-with open('requirements/install.txt') as fid:
-    INSTALL_REQUIRES = [line.strip()
-                        for line in fid.readlines()
-                        if not line.startswith('#')]
+# with open('requirements/install.txt') as fid:
+#     INSTALL_REQUIRES = [line.strip()
+#                         for line in fid.readlines()
+#                         if not line.startswith('#')]
 
 isWindows = sys.platform.startswith('win')
 isDarwin = sys.platform == "darwin"
@@ -377,7 +377,7 @@ if __name__ == '__main__':
           platforms        = PLATFORMS,
         #   classifiers      = [c for c in CLASSIFIERS.split("\n") if c],
         #   keywords         = KEYWORDS,
-          install_requires = INSTALL_REQUIRES,
+        #   install_requires = INSTALL_REQUIRES,
         #   zip_safe         = False,
         #   include_package_data = True,
 
