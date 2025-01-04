@@ -330,24 +330,24 @@ setuptools.command.build_py.make_writable = wx_make_writable
 
 WX_PKGLIST = [cfg.PKGDIR] + [cfg.PKGDIR + '.' + pkg for pkg in find_packages('wx')]
 
-ENTRY_POINTS = {
-    'console_scripts' : [
-        "img2png = wx.tools.img2png:main",
-        "img2py = wx.tools.img2py:main",
-        "img2xpm = wx.tools.img2xpm:main",
-        "pywxrc = wx.tools.pywxrc:main",
-#        ],
-#    'gui_scripts' : [  # TODO: Why was this commented out?
-        "wxget = wx.tools.wxget:main",  # New wx wget
-        "wxdocs = wx.tools.wxget_docs_demo:docs_main",  # Get/Launch Docs
-        "wxdemo = wx.tools.wxget_docs_demo:demo_main",  # Get/Launch Demo
-        "helpviewer = wx.tools.helpviewer:main",
-        "pycrust = wx.py.PyCrust:main",
-        "pyshell = wx.py.PyShell:main",
-        "pyslices = wx.py.PySlices:main",
-        "pyslicesshell = wx.py.PySlicesShell:main",
-        ],
-    }
+# ENTRY_POINTS = {
+#     'console_scripts' : [
+#         "img2png = wx.tools.img2png:main",
+#         "img2py = wx.tools.img2py:main",
+#         "img2xpm = wx.tools.img2xpm:main",
+#         "pywxrc = wx.tools.pywxrc:main",
+# #        ],
+# #    'gui_scripts' : [  # TODO: Why was this commented out?
+#         "wxget = wx.tools.wxget:main",  # New wx wget
+#         "wxdocs = wx.tools.wxget_docs_demo:docs_main",  # Get/Launch Docs
+#         "wxdemo = wx.tools.wxget_docs_demo:demo_main",  # Get/Launch Demo
+#         "helpviewer = wx.tools.helpviewer:main",
+#         "pycrust = wx.py.PyCrust:main",
+#         "pyshell = wx.py.PyShell:main",
+#         "pyslices = wx.py.PySlices:main",
+#         "pyslicesshell = wx.py.PySlicesShell:main",
+#         ],
+#     }
 
 SCRIPTS = []
 DATA_FILES = []
@@ -372,22 +372,22 @@ if __name__ == '__main__':
           url              = URL,
           project_urls     = PROJECT_URLS,
           download_url     = DOWNLOAD_URL,
-          license          = LICENSE,
+        #   license          = LICENSE,
           platforms        = PLATFORMS,
-          classifiers      = [c for c in CLASSIFIERS.split("\n") if c],
-          keywords         = KEYWORDS,
+        #   classifiers      = [c for c in CLASSIFIERS.split("\n") if c],
+        #   keywords         = KEYWORDS,
           install_requires = INSTALL_REQUIRES,
-          zip_safe         = False,
-          include_package_data = True,
+        #   zip_safe         = False,
+        #   include_package_data = True,
 
           packages         = WX_PKGLIST,
           ext_package      = cfg.PKGDIR,
 
           options          = { 'build'     : BUILD_OPTIONS },
 
-          scripts          = SCRIPTS,
+        #   scripts          = SCRIPTS,
           data_files       = DATA_FILES,
           headers          = HEADERS,
           cmdclass         = CMDCLASS,
-          entry_points     = ENTRY_POINTS,
+        #   entry_points     = ENTRY_POINTS,
         )
