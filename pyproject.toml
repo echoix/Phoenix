@@ -3,6 +3,7 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
+requires-python = ">= 3.9"
 name = "wxPython"
 dynamic = ["version"]
 description = "Cross platform GUI toolkit for Python, \"Phoenix\" version"
@@ -69,3 +70,35 @@ zip-safe = false
 
 [tool.setuptools.packages]
 find = {}
+
+[dependency-groups]
+dev = [
+    "alabaster<0.7.14",
+    "appdirs",
+    "attrdict3>=2.0.2 ; sys_platform == 'win32'",
+    "beautifulsoup4>=4.12.3",
+    "cython==3.0.10",
+    "doc2dash==2.3.0",
+    "jinja2==2.10",
+    "markupsafe==1.1.1",
+    "numpy<1.17 ; python_full_version < '2.8'",
+    "numpy>=1.24.4 ; python_full_version >= '3.0' and python_full_version < '3.12'",
+    "pytest>=8.3.4",
+    "pytest-forked>=1.6.0",
+    "pytest-timeout>=2.3.1",
+    "pytest-xdist>=3.6.1",
+    "requests[security]>=2.32.3",
+    "setuptools>=75.6.0",
+    "sip==6.9.1",
+    "six>=1.17.0",
+    "sphinx==1.8.5 ; python_full_version < '3.0'",
+    "sphinx==2.2.0 ; python_full_version >= '3.0'",
+    "sphinxcontrib-applehelp<1.0.8",
+    "sphinxcontrib-devhelp<1.0.6",
+    "sphinxcontrib-htmlhelp<2.0.5",
+    "sphinxcontrib-jsmath<1.0.2",
+    "sphinxcontrib-qthelp<1.0.7",
+    "sphinxcontrib-serializinghtml<1.1.10",
+    "twine>=6.0.1",
+    "wheel>=0.45.1",
+]
