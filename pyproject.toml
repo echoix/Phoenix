@@ -101,4 +101,5 @@ dev = [
     "sphinxcontrib-serializinghtml<1.1.10",
     "twine>=6.0.1",
     "wheel>=0.45.1",
+    # "buildtools @ {root:uri}/buildtools",
 ]
