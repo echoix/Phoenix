@@ -1,25 +1,15 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "wxPython"
 dynamic = ["version"]
 description = "Cross platform GUI toolkit for Python, \"Phoenix\" version"
 readme = "README.rst"
-license = "wxWindows Library License (https://opensource.org/licenses/wxwindows.php)"
-authors = [
-    { name = "Robin Dunn", email = "robin@alldunn.com" },
-]
-keywords = [
-    "GUI",
-    "awesome",
-    "cross-platform",
-    "user-interface",
-    "wx",
-    "wxWidgets",
-    "wxWindows",
-]
+license = { text = "wxWindows Library License (https://opensource.org/licenses/wxwindows.php)" }
+authors = [{ name = "Robin Dunn", email = "robin@alldunn.com" }]
+keywords = ["GUI", "awesome", "cross-platform", "user-interface", "wx", "wxWidgets", "wxWindows"]
 classifiers = [
     "Development Status :: 6 - Mature",
     "Environment :: MacOS X :: Cocoa",
@@ -56,9 +46,9 @@ pyshell = "wx.py.PyShell:main"
 pyslices = "wx.py.PySlices:main"
 pyslicesshell = "wx.py.PySlicesShell:main"
 pywxrc = "wx.tools.pywxrc:main"
-wxdemo = "wx.tools.wxget_docs_demo:demo_main"
-wxdocs = "wx.tools.wxget_docs_demo:docs_main"
-wxget = "wx.tools.wxget:main"
+wxdemo = "wx.tools.wxget_docs_demo:demo_main" # Get/Launch Demo
+wxdocs = "wx.tools.wxget_docs_demo:docs_main" # Get/Launch Docs
+wxget = "wx.tools.wxget:main"                 # New wx wget
 
 [project.urls]
 Documentation = "https://docs.wxpython.org/"
@@ -66,10 +56,16 @@ Download = "https://pypi.org/project/wxPython"
 Homepage = "http://wxPython.org/"
 Source = "https://github.com/wxWidgets/Phoenix"
 
-[tool.hatch.version]
-path = "wx/__init__.py"
+# [tool.hatch.version]
+# path = "wx/__init__.py"
 
-[tool.hatch.build.targets.sdist]
-include = [
-    "/wx",
-]
+# [tool.hatch.build.targets.sdist]
+# include = ["/wx"]
+
+
+[tool.setuptools]
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools.packages]
+find = {}
