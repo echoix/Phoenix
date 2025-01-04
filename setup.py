@@ -24,6 +24,7 @@ try:
 except ImportError:
     haveWheel = False
 
+sys.path.insert(0, os.path.abspath(os.path.split(__file__)[0]+'/'))
 from buildtools.config import Config, msg, opj, runcmd, canGetSOName, getSOName
 import buildtools.version as version
 
