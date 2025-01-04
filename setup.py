@@ -37,17 +37,17 @@ DOCS_BASE='http://docs.wxPython.org'
 
 NAME             = version.PROJECT_NAME
 DESCRIPTION      = "Cross platform GUI toolkit for Python, \"Phoenix\" version"
-AUTHOR           = "Robin Dunn"
-AUTHOR_EMAIL     = "robin@alldunn.com"
-URL              = "http://wxPython.org/"
-PROJECT_URLS     = {
-                    "Source": "https://github.com/wxWidgets/Phoenix",
-                    "Documentation": "https://docs.wxpython.org/",
-                   }
-DOWNLOAD_URL     = "https://pypi.org/project/{}".format(NAME)
+# AUTHOR           = "Robin Dunn"
+# AUTHOR_EMAIL     = "robin@alldunn.com"
+# URL              = "http://wxPython.org/"
+# PROJECT_URLS     = {
+#                     "Source": "https://github.com/wxWidgets/Phoenix",
+#                     "Documentation": "https://docs.wxpython.org/",
+#                    }
+# DOWNLOAD_URL     = "https://pypi.org/project/{}".format(NAME)
 LICENSE          = "wxWindows Library License (https://opensource.org/licenses/wxwindows.php)"
 PLATFORMS        = "WIN32,WIN64,OSX,POSIX"
-KEYWORDS         = "GUI,wx,wxWindows,wxWidgets,cross-platform,user-interface,awesome"
+# KEYWORDS         = "GUI,wx,wxWindows,wxWidgets,cross-platform,user-interface,awesome"
 
 LONG_DESCRIPTION = """\
 Welcome to wxPython's Project Phoenix! Phoenix is the improved next-generation
@@ -362,16 +362,17 @@ BUILD_OPTIONS = { } #'build_base' : cfg.BUILD_BASE }
 
 
 if __name__ == '__main__':
-    setup(name             = NAME,
+    setup(
+        #   name             = NAME,
           version          = cfg.VERSION,
           description      = DESCRIPTION,
           long_description = LONG_DESCRIPTION,
           long_description_content_type = 'text/x-rst',
-          author           = AUTHOR,
-          author_email     = AUTHOR_EMAIL,
-          url              = URL,
-          project_urls     = PROJECT_URLS,
-          download_url     = DOWNLOAD_URL,
+        #   author           = AUTHOR,
+        #   author_email     = AUTHOR_EMAIL,
+        #   url              = URL,
+        #   project_urls     = PROJECT_URLS,
+        #   download_url     = DOWNLOAD_URL,
         #   license          = LICENSE,
           platforms        = PLATFORMS,
         #   classifiers      = [c for c in CLASSIFIERS.split("\n") if c],
