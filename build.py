@@ -1327,6 +1327,7 @@ def cmd_sip(options, args):
             sip-files-dir = '{sip_gen_dir}'
             sip-include-dirs = ['{src_dir}']
             sip-module = "wx.siplib"
+            dunder-init = true
             """.format(
                 base=base,
                 abi_version=cfg.SIP_ABI,
