@@ -408,6 +408,12 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
 
         # write class declaration
         klassName = klass.pyName or klass.name
+        print(f"Vars of klass : {vars(klass)}")
+        baseClassSip = None
+        if hasattr(klass, "module"):
+            print(f"Vars of klass.module : {vars(klass.module)}")
+        else:
+            print("klass doesn't have a modules attribute")
         stream.write('\n%sclass %s' % (indent, klassName))
         if bases:
             stream.write('(')
@@ -416,6 +422,9 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
             stream.write(', '.join(bases))
             stream.write(')')
         else:
+            print(f"Vars of klass : {vars(klass)}")
+            print(f"Vars of klass.module : {vars(klass.module)}")
+            # print(vars(klass))
             stream.write(f'(object, {klass.module.name+"."+klassName})')
         stream.write(':\n')
         indent2 = indent + ' '*4
