@@ -2210,6 +2210,11 @@ def cmd_sdist(options, args):
                 copyFile(name, destdir)
     sip_h_dir = posixjoin(cfg.PKGDIR, 'include', 'wxPython')
     copyFile(posixjoin(sip_h_dir, 'sip.h'), posixjoin(PDEST, sip_h_dir))
+    # Copy sip-generated pyi files
+    for sip_pyi in glob.glob(posixjoin('sip','cpp','*.py*')):
+        destdir = posixjoin(PDEST, cfg.PKGDIR)
+        if not os.path.isdir(name):
+                copyFile(name, destdir)
     for wc in ['*.py', '*.pi', '*.pyi']:
         destdir = posixjoin(PDEST, cfg.PKGDIR)
         for name in glob.glob(posixjoin(cfg.PKGDIR, wc)):
