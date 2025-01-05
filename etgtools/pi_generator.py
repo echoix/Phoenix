@@ -267,11 +267,19 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
             bases = [self.fixWxPrefix(b, True) for b in bases]
             name = self.fixWxPrefix(typedef.name)
 
+        print(f"Vars of typedef : {vars(typedef)}")
+        baseClassSip = None
+        if hasattr(typedef, "module"):
+            print(f"Vars of typedef.module : {vars(typedef.module)}")
+            baseClassSip = typedef.module.name+"."+name
+            bases += [baseClassSip]
+        else:
+            print("typedef doesn't have a modules attribute")
+
         # Now write the Python equivalent class for the typedef
         if not bases:
-            bases = ['object']  # this should not happen, but just in case...
-        stream.write('%sclass %s(%s):\n' % (indent, name, ', '.join(bases+[typedef.module.name+"."+name])))
-        # stream.write('%sclass %s(%s):\n' % (indent, name, ', '.join(bases)))
+            bases = ['object']  # this should not happen, but just in case...        
+        stream.write('%sclass %s(%s):\n' % (indent, name, ', '.join(bases)))
         indent2 = indent + ' '*4
         if typedef.briefDoc:
             stream.write('%s"""\n' % indent2)
