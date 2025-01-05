@@ -1,6 +1,8 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = ["setuptools", "setuptools-scm", "sip"]
 build-backend = "setuptools.build_meta"
+backend-path = [ "."]
+
 
 [project]
 requires-python = ">= 3.9"
