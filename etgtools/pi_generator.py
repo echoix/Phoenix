@@ -419,7 +419,8 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
         if bases:
             stream.write('(')
             bases = [self.fixWxPrefix(b, True) for b in bases]
-            bases += [baseClassSip]
+            if baseClassSip is not None:
+                bases += [baseClassSip]
             stream.write(', '.join(bases))
             stream.write(')')
         else:
