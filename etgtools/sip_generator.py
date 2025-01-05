@@ -80,6 +80,8 @@ class SipWrapperGenerator(generators.WrapperGeneratorBase):
 
 %%DefaultDocstringFormat(name="deindented")
 
+%%DefaultDocstringSignature(name="appended")
+
 """ % (module.package, module.name))
 
             if module.name.startswith('_'):
