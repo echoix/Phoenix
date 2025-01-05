@@ -2215,9 +2215,9 @@ def cmd_sdist(options, args):
     for sip_pyi in glob.glob(posixjoin('sip','cpp','*.py*')):
         print(f"Found {sip_pyi}")
         destdir = posixjoin(PDEST, cfg.PKGDIR)
-        if not os.path.isdir(name):
-            copyFile(name, destdir)
-            print(f"Copied '{name}' to dir '{destdir}'")
+        if not os.path.isdir(sip_pyi):
+            copyFile(sip_pyi, destdir)
+            print(f"Copied '{sip_pyi}' to dir '{destdir}'")
     print("Finished copying sip-generated pyi files")
     for wc in ['*.py', '*.pi', '*.pyi']:
         destdir = posixjoin(PDEST, cfg.PKGDIR)
