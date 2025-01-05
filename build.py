@@ -2131,7 +2131,7 @@ def cmd_cleanall(options, args):
     cmdTimer = CommandTimer('cleanall')
     assert os.getcwd() == phoenixDir()
     files = list()
-    for wc in ['sip/cpp/*.h', 'sip/cpp/*.cpp', 'sip/cpp/*.sbf', 'sip/gen/*.sip']:
+    for wc in ['sip/cpp/*.h', 'sip/cpp/*.cpp', 'sip/cpp/*.pyi', 'sip/cpp/*.sbf', 'sip/gen/*.sip']:
         files += glob.glob(wc)
     delFiles(files)
 
