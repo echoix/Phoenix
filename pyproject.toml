@@ -115,3 +115,13 @@ dev = [
     "wheel>=0.45.1",
     # "buildtools @ {root:uri}/buildtools",
 ]
+
+
+[tool.sip.project]
+# abi-version = "{abi_version}"
+sip-files-dir = "sip/gen"
+# sip-include-dirs = ['{src_dir}']
+sip-module = "wx.siplib"
+
+[tool.sip.bindings.wx]
+pep484-pyi = true
