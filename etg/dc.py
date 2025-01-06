@@ -282,7 +282,7 @@ def run():
     c.addPyCode('DC.GetGdkDrawable = wx.deprecated(DC.GetGdkDrawable, "Use GetHandle instead.")')
 
     # context manager methods
-    c.module.addPyCode("""+
+    c.module.addPyCode("""
 from types import TracebackType
 from typing import TYPE_CHECKING, Literal
 if TYPE_CHECKING:
