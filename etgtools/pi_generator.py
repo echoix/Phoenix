@@ -271,7 +271,7 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
         baseClassSip = None
         if hasattr(typedef, "module"):
             print(f"Vars of typedef.module : {vars(typedef.module)}")
-            baseClassSip = typedef.module.name+"."+name
+            baseClassSip = typedef.module.module+"."+name
             bases += [baseClassSip]
         else:
             print("typedef doesn't have a modules attribute")
@@ -420,7 +420,7 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
         baseClassSip = None
         if hasattr(klass, "module"):
             print(f"Vars of klass.module : {vars(klass.module)}")
-            baseClassSip = klass.module.name+"."+klassName
+            baseClassSip = klass.module.module+"."+klassName
         else:
             print("klass doesn't have a modules attribute")
         stream.write('\n%sclass %s' % (indent, klassName))
