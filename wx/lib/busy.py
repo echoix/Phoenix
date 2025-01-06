@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import wx
 from wx.lib.stattext import GenStaticText as StaticText
+from types import TracebackType
 from typing import TYPE_CHECKING, Literal
 if TYPE_CHECKING:
     import sys
