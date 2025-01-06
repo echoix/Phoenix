@@ -1297,8 +1297,8 @@ def cmd_sip(options, args):
             continue
 
         # Leave it turned off for now. TODO: Experiment with this...
-        # pyi_extract = posixjoin(cfg.PKGDIR, base[1:]) + '.pyi'
-        pyi_extract = None
+        pyi_extract = posixjoin(cfg.PKGDIR, base[1:]) + '.pyi'
+        # pyi_extract = None
 
         # SIP extracts are used to pull python snippets and put them into the
         # module's .py file
@@ -1320,13 +1320,14 @@ def cmd_sip(options, args):
             tracing = {tracing}
             protected-is-public = false
             generate-extracts = [\'{extracts}\']
-            pep484-pyi = false
+            pep484-pyi = true
 
             [tool.sip.project]
             abi-version = "{abi_version}"
             sip-files-dir = '{sip_gen_dir}'
             sip-include-dirs = ['{src_dir}']
             sip-module = "wx.siplib"
+            dunder-init = true
             """.format(
                 base=base,
                 abi_version=cfg.SIP_ABI,
@@ -2131,7 +2132,7 @@ def cmd_cleanall(options, args):
     cmdTimer = CommandTimer('cleanall')
     assert os.getcwd() == phoenixDir()
     files = list()
-    for wc in ['sip/cpp/*.h', 'sip/cpp/*.cpp', 'sip/cpp/*.sbf', 'sip/gen/*.sip']:
+    for wc in ['sip/cpp/*.h', 'sip/cpp/*.cpp', 'sip/cpp/*.pyi', 'sip/cpp/*.sbf', 'sip/gen/*.sip']:
         files += glob.glob(wc)
     delFiles(files)
 
@@ -2209,6 +2210,15 @@ def cmd_sdist(options, args):
                 copyFile(name, destdir)
     sip_h_dir = posixjoin(cfg.PKGDIR, 'include', 'wxPython')
     copyFile(posixjoin(sip_h_dir, 'sip.h'), posixjoin(PDEST, sip_h_dir))
+    print("Copy sip-generated pyi files")
+    # Copy sip-generated pyi files
+    for sip_pyi in glob.glob(posixjoin('sip','cpp','*.py*')):
+        print(f"Found {sip_pyi}")
+        destdir = posixjoin(PDEST, cfg.PKGDIR)
+        if not os.path.isdir(sip_pyi):
+            copyFile(sip_pyi, destdir)
+            print(f"Copied '{sip_pyi}' to dir '{destdir}'")
+    print("Finished copying sip-generated pyi files")
     for wc in ['*.py', '*.pi', '*.pyi']:
         destdir = posixjoin(PDEST, cfg.PKGDIR)
         for name in glob.glob(posixjoin(cfg.PKGDIR, wc)):

@@ -282,8 +282,19 @@ def run():
     c.addPyCode('DC.GetGdkDrawable = wx.deprecated(DC.GetGdkDrawable, "Use GetHandle instead.")')
 
     # context manager methods
-    c.addPyMethod('__enter__', '(self)', 'return self')
-    c.addPyMethod('__exit__', '(self, exc_type, exc_val, exc_tb)', 'self.Destroy()')
+    c.module.addPyCode("""
+from types import TracebackType
+from typing import TYPE_CHECKING, Literal
+if TYPE_CHECKING:
+    import sys
+    if sys.version_info >=(3,11):
+        from typing import Self
+    else:
+        from typing import TypeVar
+        import wx.core.DC
+        Self = TypeVar("Self", bound="wx.core.DC")""")
+    c.addPyMethod('__enter__', '(self: Self) -> Self', 'return self')
+    c.addPyMethod('__exit__', '(self, exc_type: type[BaseException] | None, exc_value: BaseException | None, traceback: TracebackType | None) -> Literal[False]', 'self.Destroy()')
 
 
     # This file contains implementations of functions for quickly drawing

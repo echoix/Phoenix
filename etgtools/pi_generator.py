@@ -267,9 +267,18 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
             bases = [self.fixWxPrefix(b, True) for b in bases]
             name = self.fixWxPrefix(typedef.name)
 
+        print(f"Vars of typedef : {vars(typedef)}")
+        baseClassSip = None
+        if hasattr(typedef, "module"):
+            print(f"Vars of typedef.module : {vars(typedef.module)}")
+            baseClassSip = typedef.module.module+"."+name
+            bases += [baseClassSip]
+        else:
+            print("typedef doesn't have a modules attribute")
+
         # Now write the Python equivalent class for the typedef
         if not bases:
-            bases = ['object']  # this should not happen, but just in case...
+            bases = ['object']  # this should not happen, but just in case...        
         stream.write('%sclass %s(%s):\n' % (indent, name, ', '.join(bases)))
         indent2 = indent + ' '*4
         if typedef.briefDoc:
@@ -407,14 +416,26 @@ class PiWrapperGenerator(generators.WrapperGeneratorBase, FixWxPrefix):
 
         # write class declaration
         klassName = klass.pyName or klass.name
+        print(f"Vars of klass : {vars(klass)}")
+        baseClassSip = None
+        if hasattr(klass, "module"):
+            print(f"Vars of klass.module : {vars(klass.module)}")
+            baseClassSip = klass.module.module+"."+klassName
+        else:
+            print("klass doesn't have a modules attribute")
         stream.write('\n%sclass %s' % (indent, klassName))
         if bases:
             stream.write('(')
             bases = [self.fixWxPrefix(b, True) for b in bases]
+            if baseClassSip is not None:
+                bases += [baseClassSip]
             stream.write(', '.join(bases))
             stream.write(')')
         else:
-            stream.write('(object)')
+            if baseClassSip is None:
+                stream.write(f'(object)')
+            else:
+                stream.write(f'(object, {baseClassSip})')
         stream.write(':\n')
         indent2 = indent + ' '*4
 
