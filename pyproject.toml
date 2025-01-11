@@ -1,9 +1,9 @@
 [project]
 name = "wxPython"
-dynamic = ["version"]
+# dynamic = ["version"]
 description = "Cross platform GUI toolkit for Python, \"Phoenix\" version"
-readme = "README.rst"
-license = "wxWindows Library License (https://opensource.org/licenses/wxwindows.php)"
+# readme = "README.rst"
+# license = "wxWindows Library License (https://opensource.org/licenses/wxwindows.php)"
 authors = [
     { name = "Robin Dunn", email = "robin@alldunn.com" },
 ]
