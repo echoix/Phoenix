@@ -1,6 +1,6 @@
 [project]
 name = "wxPython"
-dynamic = ["version"]
+dynamic = ["license", "readme", "version"]
 description = "Cross platform GUI toolkit for Python, \"Phoenix\" version"
 # readme = "README.rst"
 # license = "wxWindows Library License (https://opensource.org/licenses/wxwindows.php)"
