@@ -21,8 +21,10 @@ from setuptools.command.sdist       import sdist as orig_sdist
 try:
     from wheel.bdist_wheel import bdist_wheel as orig_bdist_wheel
     haveWheel = True
+    print("haveWheel = True, so using wx_bdist_wheel")
 except ImportError:
     haveWheel = False
+    print("haveWheel = False, so not using wx_bdist_wheel")
 
 from buildtools.config import Config, msg, opj, runcmd, canGetSOName, getSOName
 import buildtools.version as version
