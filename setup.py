@@ -369,13 +369,14 @@ BUILD_OPTIONS = { } #'build_base' : cfg.BUILD_BASE }
 PACKAGE = 'wx.svg'
 PACKAGEDIR = 'wx/svg'
 
-module = Extension(name='svg._nanosvg',
-# module = Extension(name='wx.svg._nanosvg',
+# module = Extension(name='svg._nanosvg',
+module = Extension(name='wx.svg._nanosvg',
                    sources=[
+                        os.path.join(PACKAGEDIR, '_nanosvg.c'),
                         os.path.join(PACKAGEDIR, '_nanosvg.pyx'),
-                        # os.path.join(PACKAGEDIR, '_nanosvg.c'),
+                        os.path.join(PACKAGEDIR, '_nanosvg.pyd'),
                     ],
-                   include_dirs=['ext/nanosvg/src'],
+                #    include_dirs=['ext/nanosvg/src'],
                    define_macros=[('NANOSVG_IMPLEMENTATION', '1'),
                                   ('NANOSVGRAST_IMPLEMENTATION', '1'),
                                   ('NANOSVG_ALL_COLOR_KEYWORDS', '1'),
@@ -384,8 +385,8 @@ module = Extension(name='svg._nanosvg',
 if have_cython:
     modules = cythonize([module],
                         compiler_directives={'embedsignature': True,
-                                             'language_level':2,
-                                            #  'language_level': 3,
+                                            #  'language_level':2,
+                                             'language_level': 3,
                                             })
 else:
     modules = [module]
@@ -444,7 +445,7 @@ setup(name             = NAME,
           packages         = WX_PKGLIST,
           ext_package      = cfg.PKGDIR,
 
-          options          = { 'build'     : BUILD_OPTIONS },
+        #   options          = { 'build'     : BUILD_OPTIONS },
 
           scripts          = SCRIPTS,
           data_files       = DATA_FILES,
