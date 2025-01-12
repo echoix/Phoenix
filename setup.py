@@ -389,4 +389,5 @@ if __name__ == '__main__':
           headers          = HEADERS,
           cmdclass         = CMDCLASS,
           entry_points     = ENTRY_POINTS,
+          setup_requires   = ["requests"],
         )
