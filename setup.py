@@ -14,7 +14,7 @@ import glob
 import stat
 
 from setuptools                     import setup, find_packages
-from distutils.command.build        import build as orig_build
+from setuptools.command.build        import build as orig_build
 from setuptools.command.install     import install as orig_install
 from setuptools.command.bdist_egg   import bdist_egg as orig_bdist_egg
 from setuptools.command.sdist       import sdist as orig_sdist

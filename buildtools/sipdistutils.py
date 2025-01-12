@@ -1,21 +1,21 @@
-# Subclasses distutils.command.build_ext,
+# Subclasses setuptools.command.build_ext,
 # replacing it with a SIP version that compiles .sip -> .cpp
 # before calling the original build_ext command.
 # Written by Giovanni Bajo <rasky at develer dot com>
 # Based on Pyrex.Distutils, written by Graham Fawcett and Darrel Gallion.
 
-import distutils.command.build_ext
+import setuptools.command.build_ext
 from distutils.dep_util import newer, newer_group
 import os
 import sys
 from hashlib import sha1
 
-build_ext_base = distutils.command.build_ext.build_ext
+build_ext_base = setuptools.command.build_ext.build_ext
 
 def replace_suffix(path, new_suffix):
     return os.path.splitext(path)[0] + new_suffix
 
-class build_ext (build_ext_base):
+class build_ext(build_ext_base):
 
     description = "Compile SIP descriptions, then build C/C++ extensions (compile/link to build directory)"
 
