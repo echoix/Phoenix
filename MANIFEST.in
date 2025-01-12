@@ -21,3 +21,5 @@ recursive-exclude   wx  __pycache__
 # exclude             wx/svg/*.c 
 # exclude             wx/svg/*.pyx 
 # exclude             wx/svg/*.pxd
+
+# graft               ext/nanosvg/src

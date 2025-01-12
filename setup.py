@@ -193,24 +193,24 @@ class wx_bdist_egg(orig_bdist_egg):
     def finalize_options(self):
         orig_bdist_egg.finalize_options(self)
 
-        # Redo the calculation of the egg's filename since we always have
-        # extension modules, but they are not built by setuptools so it
-        # doesn't know about them.
-        from pkg_resources import Distribution
-        from sysconfig import get_python_version
-        basename = Distribution(
-            None, None, self.ei_cmd.egg_name, self.ei_cmd.egg_version,
-            get_python_version(),
-            self.plat_name
-        ).egg_name()
-        self.egg_output = os.path.join(self.dist_dir, basename+'.egg')
+        # # Redo the calculation of the egg's filename since we always have
+        # # extension modules, but they are not built by setuptools so it
+        # # doesn't know about them.
+        # from pkg_resources import Distribution
+        # from sysconfig import get_python_version
+        # basename = Distribution(
+        #     None, None, self.ei_cmd.egg_name, self.ei_cmd.egg_version,
+        #     get_python_version(),
+        #     self.plat_name
+        # ).egg_name()
+        # self.egg_output = os.path.join(self.dist_dir, basename+'.egg')
 
 
     def run(self):
-        # Ensure that there is a basic library build for bdist_egg to pull from.
-        self.run_command("build")
+        # # Ensure that there is a basic library build for bdist_egg to pull from.
+        # self.run_command("build")
 
-        _cleanup_symlinks(self)
+        # _cleanup_symlinks(self)
 
         # Run the default bdist_egg command
         orig_bdist_egg.run(self)
@@ -369,7 +369,8 @@ BUILD_OPTIONS = { } #'build_base' : cfg.BUILD_BASE }
 PACKAGE = 'wx.svg'
 PACKAGEDIR = 'wx/svg'
 
-module = Extension(name='svg._nanosvg',
+# module = Extension(name='svg._nanosvg',
+module = Extension(name='wx.svg._nanosvg',
                    sources=[
                         os.path.join(PACKAGEDIR, '_nanosvg.pyx'),
                         # os.path.join(PACKAGEDIR, '_nanosvg.c'),
@@ -384,13 +385,45 @@ if have_cython:
     modules = cythonize([module],
                         compiler_directives={'embedsignature': True,
                                              'language_level':2,
+                                            #  'language_level': 3,
                                             })
 else:
     modules = [module]
 
 
-if __name__ == '__main__':
-    setup(name             = NAME,
+# if __name__ == '__main__':
+# if __name__ == '__main__' or True:
+#     setup(name             = NAME,
+#           version          = cfg.VERSION,
+#           description      = DESCRIPTION,
+#           long_description = LONG_DESCRIPTION,
+#           long_description_content_type = 'text/x-rst',
+#           author           = AUTHOR,
+#           author_email     = AUTHOR_EMAIL,
+#           url              = URL,
+#           project_urls     = PROJECT_URLS,
+#           download_url     = DOWNLOAD_URL,
+#           license          = LICENSE,
+#           platforms        = PLATFORMS,
+#           classifiers      = [c for c in CLASSIFIERS.split("\n") if c],
+#           keywords         = KEYWORDS,
+#         #   install_requires = INSTALL_REQUIRES,
+#           zip_safe         = False,
+#           include_package_data = True,
+
+#           packages         = WX_PKGLIST,
+#           ext_package      = cfg.PKGDIR,
+
+#           options          = { 'build'     : BUILD_OPTIONS },
+
+#           scripts          = SCRIPTS,
+#           data_files       = DATA_FILES,
+#           headers          = HEADERS,
+#           cmdclass         = CMDCLASS,
+#           entry_points     = ENTRY_POINTS,
+#           ext_modules      = modules,
+#         )
+setup(name             = NAME,
           version          = cfg.VERSION,
           description      = DESCRIPTION,
           long_description = LONG_DESCRIPTION,

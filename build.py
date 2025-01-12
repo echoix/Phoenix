@@ -2009,10 +2009,10 @@ def cmd_bdist_msi(options, args):
 
 def cmd_egg_info(options, args, egg_base=None):
     cmdTimer = CommandTimer('egg_info')
-    VERBOSE = '--verbose' if options.verbose else ''
-    BASE = '--egg-base '+egg_base if egg_base is not None else ''
-    cmd = '"%s" setup.py egg_info %s %s' % (PYTHON, VERBOSE, BASE)
-    runcmd(cmd)
+    # VERBOSE = '--verbose' if options.verbose else ''
+    # BASE = '--egg-base '+egg_base if egg_base is not None else ''
+    # cmd = '"%s" setup.py egg_info %s %s' % (PYTHON, VERBOSE, BASE)
+    # runcmd(cmd)
 
 
 def cmd_clean_wx(options, args):
@@ -2248,9 +2248,9 @@ def cmd_sdist(options, args):
                         ignore=shutil.ignore_patterns('html', 'build', '__pycache__', 'cpp'))
 
     # Add some extra stuff to the root folder
-    cmd_egg_info(options, args, egg_base=PDEST)
-    copyFile(opj(PDEST, '{}.egg-info/PKG-INFO'.format(baseName)),
-             opj(PDEST, 'PKG-INFO'))
+    # cmd_egg_info(options, args, egg_base=PDEST)
+    # copyFile(opj(PDEST, '{}.egg-info/PKG-INFO'.format(baseName)),
+    #          opj(PDEST, 'PKG-INFO'))
 
     # build the tarball
     msg('Archiving Phoenix source...')

@@ -72,3 +72,6 @@
 #       ext_modules      = modules,
 #       options          = { 'build' : BUILD_OPTIONS,  },
 # )
+
+
+print("ED: in setup-wxsvg.py")
