@@ -1321,7 +1321,6 @@ def cmd_sip(options, args):
             protected-is-public = false
             generate-extracts = [\'{extracts}\']
             pep484-pyi = false
-            concatenate = 10
 
             [tool.sip.project]
             abi-version = "{abi_version}"
