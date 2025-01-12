@@ -71,5 +71,5 @@ wxget = "wx.tools.wxget:main"
 [project.urls]
 Documentation = "https://docs.wxpython.org/"
 Download = "https://pypi.org/project/wxPython"
-Homepage = "http://wxPython.org/"
+Homepage = "https://wxPython.org/"
 Source = "https://github.com/wxWidgets/Phoenix"

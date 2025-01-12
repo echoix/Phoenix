@@ -30,7 +30,7 @@ import buildtools.version as version
 
 # Create a buildtools.config.Configuration object
 cfg = Config(noWxConfig=True)
-DOCS_BASE='http://docs.wxPython.org'
+DOCS_BASE='https://docs.wxPython.org'
 
 #----------------------------------------------------------------------
 
@@ -38,7 +38,7 @@ NAME             = version.PROJECT_NAME
 DESCRIPTION      = "Cross platform GUI toolkit for Python, \"Phoenix\" version"
 AUTHOR           = "Robin Dunn"
 AUTHOR_EMAIL     = "robin@alldunn.com"
-URL              = "http://wxPython.org/"
+URL              = "https://wxPython.org/"
 PROJECT_URLS     = {
                     "Source": "https://github.com/wxWidgets/Phoenix",
                     "Documentation": "https://docs.wxpython.org/",
