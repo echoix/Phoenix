@@ -15,6 +15,7 @@ import sys
 import os
 import glob
 import fnmatch
+import logging
 import shlex
 import re
 import shutil
@@ -22,7 +23,9 @@ import subprocess
 import platform
 
 from distutils.file_util import copy_file
-from distutils.dir_util  import mkpath
+from pathlib import Path
+from typing import Union
+
 try:
     from setuptools.modified import newer
 except ImportError:
@@ -31,6 +34,15 @@ except ImportError:
 import distutils.sysconfig
 
 runSilently = False
+
+log = logging.getLogger()
+
+def mkpath(name: Union[Path, str], mode=0o777, verbose: Union[bool, int] = False):
+    """Replacement for distutils.dir_util.mkpath function, with verbose support"""
+    path = Path(name)
+    if verbose and not path.is_dir():
+        log.info("creating %s", path)
+    Path(path).mkdir(mode=mode, parents=True, exist_ok=True)
 
 #----------------------------------------------------------------------
 
@@ -1069,7 +1081,6 @@ def getToolsPlatformName(useLinuxBits=False):
 
 def updateLicenseFiles(cfg):
     from distutils.file_util import copy_file
-    from distutils.dir_util  import mkpath
 
     # Copy the license files from wxWidgets
     mkpath('license')
