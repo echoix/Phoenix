@@ -369,7 +369,7 @@ BUILD_OPTIONS = { } #'build_base' : cfg.BUILD_BASE }
 PACKAGE = 'wx.svg'
 PACKAGEDIR = 'wx/svg'
 
-module = Extension(name='wx.svg._nanosvg',
+module = Extension(name='svg._nanosvg',
                    sources=[
                         os.path.join(PACKAGEDIR, '_nanosvg.pyx'),
                         # os.path.join(PACKAGEDIR, '_nanosvg.c'),
