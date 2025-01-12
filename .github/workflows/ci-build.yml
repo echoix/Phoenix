@@ -45,7 +45,11 @@ jobs:
 
     outputs:
       VERSION: ${{ steps.generate.outputs.version }}
-
+    strategy:
+     matrix:
+      python-version:
+        - 3.10
+        - 3.12
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -53,10 +57,10 @@ jobs:
           submodules: 'recursive'
           fetch-depth: 0
 
-      - name: Set up Python 3.10
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
       - name: Install dependencies
@@ -78,7 +82,7 @@ jobs:
       - name: Save sdist as job artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wxPython-source
+          name: wxPython-source-${{ matrix.python-version }}
           path: dist/wxPython-${{ steps.generate.outputs.version }}.tar.gz
 
       - name: Create demo source distribution (sdist_demo)
@@ -104,6 +108,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        sdist-python-version: ['3.10']
         os: [ ubuntu-22.04, windows-2022, macos-13 ]
         python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13' ]
         architecture: [ 'x86', 'x64' ]
@@ -152,7 +157,7 @@ jobs:
       - name: download CI source artifact
         uses: actions/download-artifact@v4
         with:
-          name: wxPython-source
+          name: wxPython-source-${{ matrix.sdist-python-version }}
           path: dist
 
       - name: Set up Python ${{ matrix.python-version }}-${{ matrix.architecture }}
