@@ -10,6 +10,7 @@
 # License:     wxWindows License
 #----------------------------------------------------------------------
 
+import logging
 import sys
 import os
 
@@ -23,7 +24,7 @@ try:
 except ImportError:
     from distutils.dep_util import newer, newer_group
 
-from distutils import log
+log = logging.getLogger()
 
 from .config import Config, posixjoin, loadETG, etg2sip
 
