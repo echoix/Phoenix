@@ -368,15 +368,12 @@ BUILD_OPTIONS = { } #'build_base' : cfg.BUILD_BASE }
 
 PACKAGE = 'wx.svg'
 PACKAGEDIR = 'wx/svg'
-# BUILD_OPTIONS = { 'build_base' : 'build/wxsvg' }
-
-if have_cython:
-    SOURCE = os.path.join(PACKAGEDIR, '_nanosvg.pyx')
-else:
-    SOURCE = os.path.join(PACKAGEDIR, '_nanosvg.c')
 
 module = Extension(name='wx.svg._nanosvg',
-                   sources=[SOURCE],
+                   sources=[
+                        os.path.join(PACKAGEDIR, '_nanosvg.pyx'),
+                        os.path.join(PACKAGEDIR, '_nanosvg.c'),
+                    ],
                    include_dirs=['ext/nanosvg/src'],
                    define_macros=[('NANOSVG_IMPLEMENTATION', '1'),
                                   ('NANOSVGRAST_IMPLEMENTATION', '1'),
