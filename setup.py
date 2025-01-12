@@ -13,7 +13,7 @@ import sys, os
 import glob
 import stat
 
-from setuptools                     import setup, find_packages
+from setuptools                     import Extension, setup, find_packages
 from distutils.command.build        import build as orig_build
 from setuptools.command.install     import install as orig_install
 from setuptools.command.bdist_egg   import bdist_egg as orig_bdist_egg
@@ -26,7 +26,11 @@ except ImportError:
 
 from buildtools.config import Config, msg, opj, runcmd, canGetSOName, getSOName
 import buildtools.version as version
-
+try:
+    from Cython.Build import cythonize
+    have_cython = True
+except ImportError:
+    have_cython = False
 
 # Create a buildtools.config.Configuration object
 cfg = Config(noWxConfig=True)
@@ -360,6 +364,32 @@ BUILD_OPTIONS = { } #'build_base' : cfg.BUILD_BASE }
 #----------------------------------------------------------------------
 
 
+PACKAGE = 'wx.svg'
+PACKAGEDIR = 'wx/svg'
+# BUILD_OPTIONS = { 'build_base' : 'build/wxsvg' }
+
+if have_cython:
+    SOURCE = os.path.join(PACKAGEDIR, '_nanosvg.pyx')
+else:
+    SOURCE = os.path.join(PACKAGEDIR, '_nanosvg.c')
+
+module = Extension(name='wx.svg._nanosvg',
+                   sources=[SOURCE],
+                   include_dirs=['ext/nanosvg/src'],
+                   define_macros=[('NANOSVG_IMPLEMENTATION', '1'),
+                                  ('NANOSVGRAST_IMPLEMENTATION', '1'),
+                                  ('NANOSVG_ALL_COLOR_KEYWORDS', '1'),
+                                  ])
+
+if have_cython:
+    modules = cythonize([module],
+                        compiler_directives={'embedsignature': True,
+                                             'language_level':2,
+                                            })
+else:
+    modules = [module]
+
+
 if __name__ == '__main__':
     setup(name             = NAME,
           version          = cfg.VERSION,
@@ -389,4 +419,5 @@ if __name__ == '__main__':
           headers          = HEADERS,
           cmdclass         = CMDCLASS,
           entry_points     = ENTRY_POINTS,
+          ext_modules      = modules,
         )
