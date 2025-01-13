@@ -5,7 +5,10 @@
 # Based on Pyrex.Distutils, written by Graham Fawcett and Darrel Gallion.
 
 import setuptools.command.build_ext
-from distutils.dep_util import newer, newer_group
+try:
+    from setuptools.modified import newer, newer_group
+except ImportError:
+    from distutils.dep_util import newer, newer_group
 import os
 import sys
 from hashlib import sha1

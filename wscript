@@ -463,7 +463,7 @@ def my_check_python_headers(conf):
         env.append_value('CXXFLAGS_PYEXT', ['-fno-strict-aliasing'])
 
     if env.CC_NAME == "msvc":
-        from distutils.msvccompiler import MSVCCompiler
+        from setuptools._distutils.msvccompiler import MSVCCompiler
         dist_compiler = MSVCCompiler()
         dist_compiler.initialize()
         env.append_value('CFLAGS_PYEXT', dist_compiler.compile_options)
@@ -618,7 +618,7 @@ def makeExtCopyRule(bld, name):
 
 # This is the task function to be called by the above rule.
 def copyFileToPkg(task):
-    from distutils.file_util import copy_file
+    from setuptools._distutils.file_util import copy_file
     from buildtools.config   import opj
     src = task.inputs[0].abspath()
     tgt = task.outputs[0].abspath()

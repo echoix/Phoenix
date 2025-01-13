@@ -298,9 +298,9 @@ def wx_copy_file(src, dst, preserve_mode=1, preserve_times=1, update=0,
             os.symlink(linkdst, dst)
         return (dst, 1)
 
-import distutils.file_util
-orig_copy_file = distutils.file_util.copy_file
-distutils.file_util.copy_file = wx_copy_file
+import setuptools._distutils.file_util
+orig_copy_file = setuptools._distutils.file_util.copy_file
+setuptools._distutils.file_util.copy_file = wx_copy_file
 
 
 
@@ -309,9 +309,9 @@ def wx_copy_tree(src, dst, preserve_mode=1, preserve_times=1,
     return orig_copy_tree(
         src, dst, preserve_mode, preserve_times, 1, update, verbose, dry_run)
 
-import distutils.dir_util
-orig_copy_tree = distutils.dir_util.copy_tree
-distutils.dir_util.copy_tree = wx_copy_tree
+import setuptools._distutils.dir_util
+orig_copy_tree = setuptools._distutils.dir_util.copy_tree
+setuptools._distutils.dir_util.copy_tree = wx_copy_tree
 
 
 # Monkey-patch make_writeable too. Sometimes the link is copied before the
