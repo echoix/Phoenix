@@ -7,8 +7,8 @@ requires = [
     "requests[security]",
     "sip == 6.9.1",
 ]
-build-backend = "setuptools.build_meta:__legacy__"
-# build-backend = "setuptools.build_meta"
+# build-backend = "setuptools.build_meta:__legacy__"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "wxPython"
