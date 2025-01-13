@@ -26,8 +26,9 @@ except ImportError:
     haveWheel = False
     print("haveWheel = False, so not using wx_bdist_wheel")
 
-from .buildtools.config import Config, msg, opj, runcmd, canGetSOName, getSOName
-from .buildtools import version as version
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+from buildtools.config import Config, msg, opj, runcmd, canGetSOName, getSOName
+import buildtools.version as version
 try:
     from Cython.Build import cythonize
     have_cython = True
