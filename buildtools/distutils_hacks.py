@@ -15,9 +15,9 @@ import sys
 import os
 
 import setuptools.command.install
-import setuptools.command.install_data
-import setuptools.command.install_headers
-import setuptools.command.clean
+import setuptools._distutils.command.install_data
+import setuptools._distutils.command.install_headers
+import setuptools._distutils.command.clean
 
 try:
     from setuptools.modified import newer, newer_group
@@ -34,15 +34,15 @@ from .config import Config, posixjoin, loadETG, etg2sip
 # New command classes
 
 
-class wx_smart_install_data(setuptools.command.install_data.install_data):
+class wx_smart_install_data(setuptools._distutils.command.install_data.install_data):
     """need to change self.install_dir to the actual library dir"""
     def run(self):
         install_cmd = self.get_finalized_command('install')
         self.install_dir = getattr(install_cmd, 'install_lib')
-        return setuptools.command.install_data.install_data.run(self)
+        return setuptools._distutils.command.install_data.install_data.run(self)
 
 
-class wx_extra_clean(setuptools.command.clean.clean):
+class wx_extra_clean(setuptools._distutils.command.clean.clean):
     """
     Also cleans stuff that this setup.py copies itself.  If the
     --all flag was used also searches for .pyc, .pyd, .so files
@@ -50,7 +50,7 @@ class wx_extra_clean(setuptools.command.clean.clean):
     def run(self):
         from distutils.filelist import FileList
 
-        setuptools.command.clean.clean.run(self)
+        setuptools._distutils.command.clean.clean.run(self)
 
         cfg = Config()
         if self.all:
@@ -103,18 +103,18 @@ class wx_install(setuptools.command.install.install):
         self.install_path_file = 0
 
 
-class wx_install_headers(setuptools.command.install_headers.install_headers):
+class wx_install_headers(setuptools._distutils.command.install_headers.install_headers):
     """
     Install the header files to the WXPREFIX, with an extra dir per
     filename too
     """
     def initialize_options(self):
         self.root = None
-        setuptools.command.install_headers.install_headers.initialize_options(self)
+        setuptools._distutils.command.install_headers.install_headers.initialize_options(self)
 
     def finalize_options(self):
         self.set_undefined_options('install', ('root', 'root'))
-        setuptools.command.install_headers.install_headers.finalize_options(self)
+        setuptools._distutils.command.install_headers.install_headers.finalize_options(self)
 
     def run(self):
         if os.name == 'nt':
