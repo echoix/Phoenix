@@ -1025,10 +1025,13 @@ def getMSVCInfo(PYTHON, arch, set_env=False):
         "print(env)"
     cmd = cmd.format(arch)
     env = eval(runcmd('"%s" -c "%s"' % (PYTHON, cmd), getOutput=True, echoCmd=False))
+    print("getMSVCInfo env variable is: ")
+    print(env)
     info = AttrDict(env)
     from pprint import pprint
     print("getMSVCInfo is: ")
     pprint(info)
+    print(info)
     print("getMSVCInfo vars is: ")
     print(vars(info))
     if set_env:
