@@ -375,7 +375,6 @@ module = Extension(name='wx.svg._nanosvg',
                    sources=[
                         os.path.join(PACKAGEDIR, '_nanosvg.c'),
                         os.path.join(PACKAGEDIR, '_nanosvg.pyx'),
-                        os.path.join(PACKAGEDIR, '_nanosvg.pyd'),
                     ],
                 #    include_dirs=['ext/nanosvg/src'],
                    define_macros=[('NANOSVG_IMPLEMENTATION', '1'),
