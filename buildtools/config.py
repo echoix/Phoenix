@@ -1027,7 +1027,8 @@ def getMSVCInfo(PYTHON, arch, set_env=False):
     env = eval(runcmd('"%s" -c "%s"' % (PYTHON, cmd), getOutput=True, echoCmd=False))
     print("getMSVCInfo env variable is: ")
     print(env)
-    info = AttrDict(env)
+    info = dict(env)
+    info2 = AttrDict(env)
     from pprint import pprint
     print("getMSVCInfo is: ")
     pprint(info)
@@ -1035,10 +1036,14 @@ def getMSVCInfo(PYTHON, arch, set_env=False):
     print("getMSVCInfo vars is: ")
     print(vars(info))
     if set_env:
-        os.environ['PATH'] =    info.path
-        os.environ['INCLUDE'] = info.include
-        os.environ['LIB'] =     info.lib
-        os.environ['LIBPATH'] = info.libpath
+        os.environ['PATH'] =    info["path"]
+        os.environ['INCLUDE'] = info["include"]
+        os.environ['LIB'] =     info["lib"]
+        os.environ['LIBPATH'] = info["libpath"]
+        # os.environ['PATH'] =    info.path
+        # os.environ['INCLUDE'] = info.include
+        # os.environ['LIB'] =     info.lib
+        # os.environ['LIBPATH'] = info.libpath
 
         # We already have everything we need, tell distutils to not go hunting
         # for it all again if it happens to be called.
