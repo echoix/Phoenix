@@ -22,7 +22,7 @@ import shutil
 import subprocess
 import platform
 
-from distutils.file_util import copy_file
+from setuptools._distutils.file_util import copy_file
 from pathlib import Path
 from typing import Union
 
@@ -1080,7 +1080,7 @@ def getToolsPlatformName(useLinuxBits=False):
 
 
 def updateLicenseFiles(cfg):
-    from distutils.file_util import copy_file
+    from setuptools._distutils.file_util import copy_file
 
     # Copy the license files from wxWidgets
     mkpath('license')
