@@ -6,7 +6,6 @@ requires = [
     "requests",
     "requests[security]",
     "sip == 6.9.1",
-    "setuptools_scm"
 ]
 build-backend = "setuptools.build_meta:__legacy__"
 # build-backend = "setuptools.build_meta"
