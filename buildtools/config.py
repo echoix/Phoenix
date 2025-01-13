@@ -15,22 +15,34 @@ import sys
 import os
 import glob
 import fnmatch
+import logging
 import shlex
 import re
 import shutil
 import subprocess
 import platform
 
-from distutils.file_util import copy_file
-from distutils.dir_util  import mkpath
+from setuptools._distutils.file_util import copy_file
+from pathlib import Path
+from typing import Union
+
 try:
     from setuptools.modified import newer
 except ImportError:
     from distutils.dep_util import newer
 
-import distutils.sysconfig
+import sysconfig
 
 runSilently = False
+
+log = logging.getLogger()
+
+def mkpath(name: Union[Path, str], mode=0o777, verbose: Union[bool, int] = False):
+    """Replacement for distutils.dir_util.mkpath function, with verbose support"""
+    path = Path(name)
+    if verbose and not path.is_dir():
+        log.info("creating %s", path)
+    Path(path).mkdir(mode=mode, parents=True, exist_ok=True)
 
 #----------------------------------------------------------------------
 
@@ -269,7 +281,7 @@ class Configuration(object):
                 # we get the right sysroot, but we also need to ensure that
                 # the other linker flags that distutils wants to use are
                 # included as well.
-                LDSHARED = distutils.sysconfig.get_config_var('LDSHARED').split()
+                LDSHARED = sysconfig.get_config_var('LDSHARED').split()
                 # remove the compiler command
                 del LDSHARED[0]
                 # remove any -sysroot flags and their arg
@@ -1068,8 +1080,7 @@ def getToolsPlatformName(useLinuxBits=False):
 
 
 def updateLicenseFiles(cfg):
-    from distutils.file_util import copy_file
-    from distutils.dir_util  import mkpath
+    from setuptools._distutils.file_util import copy_file
 
     # Copy the license files from wxWidgets
     mkpath('license')

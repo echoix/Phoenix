@@ -10,20 +10,21 @@
 # License:     wxWindows License
 #----------------------------------------------------------------------
 
+import logging
 import sys
 import os
 
-import distutils.command.install
-import distutils.command.install_data
-import distutils.command.install_headers
-import distutils.command.clean
+import setuptools.command.install
+import setuptools._distutils.command.install_data
+import setuptools._distutils.command.install_headers
+import setuptools._distutils.command.clean
 
 try:
     from setuptools.modified import newer, newer_group
 except ImportError:
     from distutils.dep_util import newer, newer_group
 
-from distutils import log
+log = logging.getLogger()
 
 from .config import Config, posixjoin, loadETG, etg2sip
 
@@ -33,23 +34,23 @@ from .config import Config, posixjoin, loadETG, etg2sip
 # New command classes
 
 
-class wx_smart_install_data(distutils.command.install_data.install_data):
+class wx_smart_install_data(setuptools._distutils.command.install_data.install_data):
     """need to change self.install_dir to the actual library dir"""
     def run(self):
         install_cmd = self.get_finalized_command('install')
         self.install_dir = getattr(install_cmd, 'install_lib')
-        return distutils.command.install_data.install_data.run(self)
+        return setuptools._distutils.command.install_data.install_data.run(self)
 
 
-class wx_extra_clean(distutils.command.clean.clean):
+class wx_extra_clean(setuptools._distutils.command.clean.clean):
     """
     Also cleans stuff that this setup.py copies itself.  If the
     --all flag was used also searches for .pyc, .pyd, .so files
     """
     def run(self):
-        from distutils.filelist import FileList
+        from setuptools._distutils.filelist import FileList
 
-        distutils.command.clean.clean.run(self)
+        setuptools._distutils.command.clean.clean.run(self)
 
         cfg = Config()
         if self.all:
@@ -82,7 +83,7 @@ class wx_extra_clean(distutils.command.clean.clean):
 # is used in our package build.  If we detect that the current
 # distutils does not have it then make sure that it is removed from
 # the command-line options, otherwise the build will fail.
-for item in distutils.command.install.install.user_options:
+for item in setuptools.command.install.install.user_options:
     if item[0] == 'install-layout=':
         break
 else:
@@ -93,27 +94,27 @@ else:
 
 
 
-class wx_install(distutils.command.install.install):
+class wx_install(setuptools.command.install.install):
     """
     Turns off install_path_file
     """
     def initialize_options(self):
-        distutils.command.install.install.initialize_options(self)
+        setuptools.command.install.install.initialize_options(self)
         self.install_path_file = 0
 
 
-class wx_install_headers(distutils.command.install_headers.install_headers):
+class wx_install_headers(setuptools._distutils.command.install_headers.install_headers):
     """
     Install the header files to the WXPREFIX, with an extra dir per
     filename too
     """
     def initialize_options(self):
         self.root = None
-        distutils.command.install_headers.install_headers.initialize_options(self)
+        setuptools._distutils.command.install_headers.install_headers.initialize_options(self)
 
     def finalize_options(self):
         self.set_undefined_options('install', ('root', 'root'))
-        distutils.command.install_headers.install_headers.finalize_options(self)
+        setuptools._distutils.command.install_headers.install_headers.finalize_options(self)
 
     def run(self):
         if os.name == 'nt':
@@ -149,9 +150,10 @@ class wx_install_headers(distutils.command.install_headers.install_headers):
 # -arch is specified in our compiler args then we need to strip all of
 # the -arch and -isysroot args provided by Python.
 
-import distutils.unixccompiler
-import distutils.sysconfig
-from distutils.errors import DistutilsExecError, CompileError
+import setuptools._distutils.unixccompiler
+import setuptools._distutils.sysconfig
+from setuptools.errors import CompileError
+from setuptools._distutils.errors import DistutilsExecError
 
 def _darwin_compiler_fixup(compiler_so, cc_args):
     """
@@ -240,7 +242,7 @@ class MyUnixCCompiler(distutils.unixccompiler.UnixCCompiler):
         except DistutilsExecError as msg:
             raise CompileError(msg)
 
-_orig_parse_makefile = distutils.sysconfig.parse_makefile
+_orig_parse_makefile = setuptools._distutils.sysconfig.parse_makefile
 def _parse_makefile(filename, g=None):
     rv = _orig_parse_makefile(filename, g)
 
@@ -255,10 +257,10 @@ def _parse_makefile(filename, g=None):
     return rv
 
 
-distutils.unixccompiler.UnixCCompiler = MyUnixCCompiler
-distutils.unixccompiler._darwin_compiler_fixup = _darwin_compiler_fixup
-distutils.unixccompiler._darwin_compiler = _darwin_compiler_fixup_24
-distutils.sysconfig.parse_makefile = _parse_makefile
+setuptools._distutils.unixccompiler.UnixCCompiler = MyUnixCCompiler
+setuptools._distutils.unixccompiler._darwin_compiler_fixup = _darwin_compiler_fixup
+setuptools._distutils.unixccompiler._darwin_compiler = _darwin_compiler_fixup_24
+setuptools._distutils.sysconfig.parse_makefile = _parse_makefile
 
 
 # Inject a little code into the CCompiler class that will check if the object
@@ -285,8 +287,7 @@ distutils.ccompiler.CCompiler._setup_compile = _setup_compile
 # Another hack-job for the CygwinCCompiler class, this time replacing
 # the _compile function with one that will pass the -I flags to windres.
 
-import distutils.cygwinccompiler
-from distutils.errors import DistutilsExecError, CompileError
+import setuptools._distutils.cygwinccompiler
 
 def _compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
     if ext == '.rc' or ext == '.res':
@@ -304,7 +305,7 @@ def _compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
         except DistutilsExecError as msg:
             raise CompileError(msg)
 
-distutils.cygwinccompiler.CygwinCCompiler._compile = _compile
+setuptools._distutils.cygwinccompiler.CygwinCCompiler._compile = _compile
 
 
 #----------------------------------------------------------------------
@@ -316,8 +317,8 @@ distutils.cygwinccompiler.CygwinCCompiler._compile = _compile
 # a monkey-patch of the msvc9compiler.MSVCCompiler.initialize method.
 
 if os.name == 'nt' and  sys.version_info >= (2,6):
-    import distutils.msvc9compiler
-    _orig_initialize = distutils.msvc9compiler.MSVCCompiler.initialize
+    import setuptools._distutils.msvc9compiler
+    _orig_initialize = setuptools._distutils.msvc9compiler.MSVCCompiler.initialize
 
     def _initialize(self, *args, **kw):
         rv = _orig_initialize(self, *args, **kw)

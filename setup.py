@@ -14,7 +14,7 @@ import glob
 import stat
 
 from setuptools                     import setup, find_packages
-from distutils.command.build        import build as orig_build
+from setuptools.command.build        import build as orig_build
 from setuptools.command.install     import install as orig_install
 from setuptools.command.bdist_egg   import bdist_egg as orig_bdist_egg
 from setuptools.command.sdist       import sdist as orig_sdist
@@ -292,15 +292,15 @@ def wx_copy_file(src, dst, preserve_mode=1, preserve_times=1, update=0,
             dst = os.path.join(dst, os.path.basename(src))
         linkdst = os.readlink(src)
         if verbose >= 1:
-            from distutils import log
-            log.info("%s %s -> %s", 'copying symlink', src, dst)
+            import logging
+            logging.info("%s %s -> %s", 'copying symlink', src, dst)
         if not dry_run and not os.path.exists(dst):
             os.symlink(linkdst, dst)
         return (dst, 1)
 
-import distutils.file_util
-orig_copy_file = distutils.file_util.copy_file
-distutils.file_util.copy_file = wx_copy_file
+import setuptools._distutils.file_util
+orig_copy_file = setuptools._distutils.file_util.copy_file
+setuptools._distutils.file_util.copy_file = wx_copy_file
 
 
 
@@ -309,9 +309,9 @@ def wx_copy_tree(src, dst, preserve_mode=1, preserve_times=1,
     return orig_copy_tree(
         src, dst, preserve_mode, preserve_times, 1, update, verbose, dry_run)
 
-import distutils.dir_util
-orig_copy_tree = distutils.dir_util.copy_tree
-distutils.dir_util.copy_tree = wx_copy_tree
+import setuptools._distutils.dir_util
+orig_copy_tree = setuptools._distutils.dir_util.copy_tree
+setuptools._distutils.dir_util.copy_tree = wx_copy_tree
 
 
 # Monkey-patch make_writeable too. Sometimes the link is copied before the
@@ -389,4 +389,5 @@ if __name__ == '__main__':
           headers          = HEADERS,
           cmdclass         = CMDCLASS,
           entry_points     = ENTRY_POINTS,
+          setup_requires   = ["requests" ],
         )
