@@ -31,7 +31,7 @@ try:
 except ImportError:
     from distutils.dep_util import newer
 
-import distutils.sysconfig
+import sysconfig
 
 runSilently = False
 
@@ -281,7 +281,7 @@ class Configuration(object):
                 # we get the right sysroot, but we also need to ensure that
                 # the other linker flags that distutils wants to use are
                 # included as well.
-                LDSHARED = distutils.sysconfig.get_config_var('LDSHARED').split()
+                LDSHARED = sysconfig.get_config_var('LDSHARED').split()
                 # remove the compiler command
                 del LDSHARED[0]
                 # remove any -sysroot flags and their arg
