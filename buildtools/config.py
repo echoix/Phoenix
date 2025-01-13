@@ -1026,7 +1026,11 @@ def getMSVCInfo(PYTHON, arch, set_env=False):
     cmd = cmd.format(arch)
     env = eval(runcmd('"%s" -c "%s"' % (PYTHON, cmd), getOutput=True, echoCmd=False))
     info = AttrDict(env)
-
+    from pprint import pprint
+    print("getMSVCInfo is: ")
+    pprint(info)
+    print("getMSVCInfo vars is: ")
+    print(vars(info))
     if set_env:
         os.environ['PATH'] =    info.path
         os.environ['INCLUDE'] = info.include
