@@ -292,8 +292,8 @@ def wx_copy_file(src, dst, preserve_mode=1, preserve_times=1, update=0,
             dst = os.path.join(dst, os.path.basename(src))
         linkdst = os.readlink(src)
         if verbose >= 1:
-            from distutils import log
-            log.info("%s %s -> %s", 'copying symlink', src, dst)
+            import logging
+            logging.info("%s %s -> %s", 'copying symlink', src, dst)
         if not dry_run and not os.path.exists(dst):
             os.symlink(linkdst, dst)
         return (dst, 1)
