@@ -632,7 +632,8 @@ def run():
     # wxEventBlocker
     c = module.find('wxEventBlocker')
     c.addPyCode("""\
-if sys.version_info >= (3, 10):
+import sys
+if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
@@ -644,7 +645,8 @@ else:
     # wxPropagationDisabler
     c = module.find('wxPropagationDisabler')
     c.addPyCode("""\
-if sys.version_info >= (3, 10):
+import sys
+if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
@@ -657,7 +659,8 @@ else:
     # wxPropagateOnce
     c = module.find('wxPropagateOnce')
     c.addPyCode("""\
-if sys.version_info >= (3, 10):
+import sys
+if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self

@@ -42,7 +42,8 @@ def run():
 
     # TODO: This delayed initialization wrapper class may also be useful elsewhere...
     module.addPyCode("""\
-if sys.version_info >= (3, 10):
+import sys
+if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self

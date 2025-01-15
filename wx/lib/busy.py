@@ -17,7 +17,7 @@ import sys
 import wx
 from wx.lib.stattext import GenStaticText as StaticText
 
-if sys.version_info >= (3, 10):
+if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
