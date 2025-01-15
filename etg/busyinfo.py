@@ -38,7 +38,7 @@ def run():
     c.addPrivateCopyCtor()
 
     # context manager methods
-    c.addPyMethod('__enter__', '(self)', 'return self')
+    c.addPyMethod('__enter__', '(self) -> Self', 'return self')
     c.addPyMethod('__exit__', '(self, exc_type, exc_val, exc_tb)', 'return False')
 
 

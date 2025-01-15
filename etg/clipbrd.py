@@ -42,6 +42,12 @@ def run():
 
     # TODO: This delayed initialization wrapper class may also be useful elsewhere...
     module.addPyCode("""\
+if sys.version_info >= (3, 10):
+    from typing import Self
+else:
+    from typing_extensions import Self
+    """)
+    module.addPyCode("""\
         # Since wxTheClipboard is not really a global variable (it is a macro
         # that calls the Get static method) we can't declare it as a global
         # variable for the wrapper generator, otherwise it will try to run the
@@ -66,7 +72,7 @@ def run():
                 return repr(self._instance)
 
             # context manager methods
-            def __enter__(self):
+            def __enter__(self) -> Self:
                 self._checkInstance()
                 if not self.Open():
                     raise RuntimeError('Unable to open clipboard.')

@@ -423,7 +423,12 @@ def run():
 
     #-----------------------------------------------------------------------
     # Other stuff
-
+    module.addPyCode("""\
+if sys.version_info >= (3, 10):
+    from typing import Self
+else:
+    from typing_extensions import Self
+    """)
     module.addPyCode('''\
     class FrozenWindow(object):
         """
@@ -433,7 +438,7 @@ def run():
         """
         def __init__(self, window):
             self._win = window
-        def __enter__(self):
+        def __enter__(self) -> Self:
             self._win.Freeze()
             return self
         def __exit__(self, exc_type, exc_val, exc_tb):

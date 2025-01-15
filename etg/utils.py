@@ -43,7 +43,13 @@ def run():
     c.mustHaveApp()
     c.addPrivateCopyCtor()
     # add context manager methods
-    c.addPyMethod('__enter__', '(self)', 'return self')
+    c.addPyCode("""\
+if sys.version_info >= (3, 10):
+    from typing import Self
+else:
+    from typing_extensions import Self
+    """)
+    c.addPyMethod('__enter__', '(self) -> Self', 'return self')
     c.addPyMethod('__exit__', '(self, exc_type, exc_val, exc_tb)', 'pass')
 
 
@@ -87,7 +93,13 @@ def run():
     c = module.find('wxBusyCursor')
     c.mustHaveApp()
     # add context manager methods
-    c.addPyMethod('__enter__', '(self)', 'return self')
+    c.addPyCode("""\
+if sys.version_info >= (3, 10):
+    from typing import Self
+else:
+    from typing_extensions import Self
+    """)
+    c.addPyMethod('__enter__', '(self) -> Self', 'return self')
     c.addPyMethod('__exit__', '(self, exc_type, exc_val, exc_tb)', 'pass')
 
     f = module.find('wxNewId')

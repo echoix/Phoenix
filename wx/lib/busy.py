@@ -13,8 +13,14 @@ A class like :class:`wx.BusyInfo` but which doesn't take up so much space by def
 and which has a nicer look.
 """
 
+import sys
 import wx
 from wx.lib.stattext import GenStaticText as StaticText
+
+if sys.version_info >= (3, 10):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 #---------------------------------------------------------------------------
 
@@ -66,11 +72,10 @@ class BusyInfo(object):
             self.frame.Close()
             self.frame = None
 
-
     # Magic methods for using this class as a Context Manager
-    def __enter__(self):
+    def __enter__(self) -> Self:
         return self
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
         self.Close()
         return False
 
