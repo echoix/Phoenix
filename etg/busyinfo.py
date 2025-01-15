@@ -38,6 +38,12 @@ def run():
     c.addPrivateCopyCtor()
 
     # context manager methods
+    c.addPyCode("""\
+if sys.version_info >= (3, 10):
+    from typing import Self
+else:
+    from typing_extensions import Self
+    """)
     c.addPyMethod('__enter__', '(self) -> Self', 'return self')
     c.addPyMethod('__exit__', '(self, exc_type, exc_val, exc_tb)', 'return False')
 
