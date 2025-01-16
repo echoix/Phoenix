@@ -725,7 +725,6 @@ def etg2sip(etgfile):
 def _getSbfValue(etg, keyName):
     cfg = Config()
     sbf = opj(cfg.SIPOUT, etg.NAME + '.sbf')
-    out = list()
     with open(sbf) as fid:
         for line in fid:
             key, value = line.split('=')
@@ -870,7 +869,6 @@ def getVcsRev():
     def _getSvnRevision():
         if not os.path.exists('.svn'):
             return None
-        svnrev = None
         try:
             rev = runcmd('svnversion', getOutput=True, echoCmd=False)
         except:
