@@ -46,7 +46,7 @@ def mkpath(name: Union[Path, str], mode=0o777, verbose: Union[bool, int] = False
 
 #----------------------------------------------------------------------
 
-class Configuration(object):
+class Configuration:
 
     ##SIP      = SIPdefault         # Where is the sip binary?
     SIPINC   = 'sip/siplib'       # Use our local copy of sip.h
