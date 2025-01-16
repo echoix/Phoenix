@@ -107,7 +107,7 @@ class Configuration(object):
     # Basic initialization and configuration code
 
     def __init__(self, noWxConfig=False):
-        self.CLEANUP = list()
+        self.CLEANUP = []
 
         self.resetVersion()
 
@@ -917,10 +917,9 @@ def runcmd(cmd, getOutput=False, echoCmd=True, fatal=True, onError=None):
     if echoCmd:
         msg(cmd)
 
-    otherKwArgs = dict()
+    otherKwArgs = {}
     if getOutput:
-        otherKwArgs = dict(stdout=subprocess.PIPE,
-                           stderr=subprocess.STDOUT)
+        otherKwArgs = {"stdout": subprocess.PIPE, "stderr": subprocess.STDOUT}
 
     with subprocess.Popen(cmd, shell=True, env=os.environ, **otherKwArgs) as sp:
 
@@ -974,7 +973,7 @@ def getSipFiles(names):
     """
     Returns a list of the corresponding .sip files for each of the names in names.
     """
-    files = list()
+    files = []
     for template in ['sip/gen/%s.sip', 'src/%s.sip']:
         for name in names:
             name = template % name
