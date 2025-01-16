@@ -467,8 +467,7 @@ class Configuration(object):
 
     def getWxConfigValue(self, flag):
         cmd = "%s %s" % (self.WX_CONFIG, flag)
-        value = os.popen(cmd, 'r').read()[:-1]
-        return value
+        return os.popen(cmd, 'r').read()[:-1]
 
 
     def unpackCompilerCommand(self, cmd):
@@ -658,8 +657,7 @@ class Configuration(object):
         # We expect that the first -I flag is the path we're looking for here
         configDir = output.split()[0]
         assert configDir.startswith('-I')
-        configDir = configDir[2:]
-        return configDir
+        return configDir[2:]
 
 
 # We'll use a factory function so we can use the Configuration class as a singleton
@@ -717,9 +715,7 @@ def loadETG(name):
 def etg2sip(etgfile):
     cfg = Config()
     sipfile = os.path.splitext(os.path.basename(etgfile))[0] + '.sip'
-
-    sipfile = posixjoin(cfg.SIPGEN, sipfile)
-    return sipfile
+    return posixjoin(cfg.SIPGEN, sipfile)
 
 
 def _getSbfValue(etg, keyName):
@@ -873,8 +869,7 @@ def getVcsRev():
             rev = runcmd('svnversion', getOutput=True, echoCmd=False)
         except:
             return None
-        svnrev = rev.split(':')[0]
-        return svnrev
+        return rev.split(":")[0]
 
     def _getGitRevision():
         try:
