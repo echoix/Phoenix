@@ -19,8 +19,8 @@ import xml.etree.ElementTree as et
 import copy
 
 from .tweaker_tools import FixWxPrefix, magicMethods, \
-                           guessTypeInt, guessTypeFloat, guessTypeStr, \
-                           textfile_open
+                           guessTypeInt, guessTypeFloat, guessTypeStr
+from .generators import textfile_open
 from sphinxtools.utilities import findDescendants
 
 #---------------------------------------------------------------------------
