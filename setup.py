@@ -78,33 +78,6 @@ the respective items. (Documents are launched in the default browser and demo is
 with python).
 """.format(version=cfg.VERSION, docs_base=DOCS_BASE)
 
-
-CLASSIFIERS      = """\
-Development Status :: 6 - Mature
-Environment :: MacOS X :: Cocoa
-Environment :: Win32 (MS Windows)
-Environment :: X11 Applications :: GTK
-Intended Audience :: Developers
-License :: OSI Approved
-Operating System :: MacOS :: MacOS X
-Operating System :: Microsoft :: Windows :: Windows 7
-Operating System :: Microsoft :: Windows :: Windows 10
-Operating System :: POSIX
-Programming Language :: Python :: 3.7
-Programming Language :: Python :: 3.8
-Programming Language :: Python :: 3.9
-Programming Language :: Python :: 3.10
-Programming Language :: Python :: 3.11
-Programming Language :: Python :: 3.12
-Programming Language :: Python :: Implementation :: CPython
-Topic :: Software Development :: User Interfaces
-"""
-
-# with open('requirements/install.txt') as fid:
-#     INSTALL_REQUIRES = [line.strip()
-#                         for line in fid.readlines()
-#                         if not line.startswith('#')]
-
 isWindows = sys.platform.startswith('win')
 isDarwin = sys.platform == "darwin"
 
@@ -409,7 +382,6 @@ setup(name             = NAME,
           download_url     = DOWNLOAD_URL,
         #   license          = LICENSE,
           platforms        = PLATFORMS,
-          classifiers      = [c for c in CLASSIFIERS.split("\n") if c],
           keywords         = KEYWORDS,
         #   install_requires = INSTALL_REQUIRES,
           zip_safe         = False,
