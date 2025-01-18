@@ -337,39 +337,6 @@ BUILD_OPTIONS = { } #'build_base' : cfg.BUILD_BASE }
 
 #----------------------------------------------------------------------
 
-
-# if __name__ == '__main__':
-# if __name__ == '__main__' or True:
-#     setup(name             = NAME,
-#           version          = cfg.VERSION,
-#           description      = DESCRIPTION,
-#           long_description = LONG_DESCRIPTION,
-#           long_description_content_type = 'text/x-rst',
-#           author           = AUTHOR,
-#           author_email     = AUTHOR_EMAIL,
-#           url              = URL,
-#           project_urls     = PROJECT_URLS,
-#           download_url     = DOWNLOAD_URL,
-#           license          = LICENSE,
-#           platforms        = PLATFORMS,
-#           classifiers      = [c for c in CLASSIFIERS.split("\n") if c],
-#           keywords         = KEYWORDS,
-#         #   install_requires = INSTALL_REQUIRES,
-#           zip_safe         = False,
-#           include_package_data = True,
-
-#           packages         = WX_PKGLIST,
-#           ext_package      = cfg.PKGDIR,
-
-#           options          = { 'build'     : BUILD_OPTIONS },
-
-#           scripts          = SCRIPTS,
-#           data_files       = DATA_FILES,
-#           headers          = HEADERS,
-#           cmdclass         = CMDCLASS,
-#           entry_points     = ENTRY_POINTS,
-#           ext_modules      = modules,
-#         )
 setup(name             = NAME,
           version          = cfg.VERSION,
           description      = DESCRIPTION,
@@ -380,22 +347,16 @@ setup(name             = NAME,
           url              = URL,
           project_urls     = PROJECT_URLS,
           download_url     = DOWNLOAD_URL,
-        #   license          = LICENSE,
           platforms        = PLATFORMS,
           keywords         = KEYWORDS,
-        #   install_requires = INSTALL_REQUIRES,
           zip_safe         = False,
           include_package_data = True,
 
           packages         = WX_PKGLIST,
           ext_package      = cfg.PKGDIR,
-
-        #   options          = { 'build'     : BUILD_OPTIONS },
-
           scripts          = SCRIPTS,
           data_files       = DATA_FILES,
           headers          = HEADERS,
           cmdclass         = CMDCLASS,
           entry_points     = ENTRY_POINTS,
-        #   ext_modules      = modules,
         )
