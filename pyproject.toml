@@ -63,7 +63,7 @@ Source = "https://github.com/wxWidgets/Phoenix"
 
 [build-system]
 requires = [
-    "setuptools>=61",
+    "setuptools>=74.1.0",
     "attrdict3 ; sys_platform == 'win32'",
     "cython == 3.0.10",
     "requests",
@@ -74,3 +74,22 @@ build-backend = "setuptools.build_meta:__legacy__"
 
 [tool.setuptools]
 license-files = ["LICENSE.txt"]
+
+[[tool.setuptools.ext-modules]]
+name = "wx.svg._nanosvg"
+sources = ["wx/svg/_nanosvg.pyx", "wx/svg/_nanosvg.pxd"]
+include-dirs = ["ext/nanosvg/src"]
+define-macros = [
+    [
+        "NANOSVG_IMPLEMENTATION",
+        "1",
+    ],
+    [
+        "NANOSVGRAST_IMPLEMENTATION",
+        "1",
+    ],
+    [
+        "NANOSVG_ALL_COLOR_KEYWORDS",
+        "1",
+    ],
+]
