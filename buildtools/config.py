@@ -1030,11 +1030,15 @@ def getMSVCInfo(PYTHON, arch, set_env=False):
     info = dict(env)
     info2 = AttrDict(env)
     from pprint import pprint
+    print("getMSVCInfo info2 is (pprint): ")
+    pprint(info2)
+    print("getMSVCInfo info2 is (print): ")
+    print(info2)
     print("getMSVCInfo is: ")
     pprint(info)
     print(info)
-    print("getMSVCInfo vars is: ")
-    print(vars(info))
+    # print("getMSVCInfo vars is: ")
+    # print(vars(info))
     if set_env:
         os.environ['PATH'] =    info["path"]
         os.environ['INCLUDE'] = info["include"]
