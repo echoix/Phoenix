@@ -26,7 +26,6 @@ except ImportError:
     haveWheel = False
     print("haveWheel = False, so not using wx_bdist_wheel")
 
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from buildtools.config import Config, msg, opj, runcmd, canGetSOName, getSOName
 import buildtools.version as version
 try:
