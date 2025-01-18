@@ -50,7 +50,6 @@ PROJECT_URLS     = {
                     "Documentation": "https://docs.wxpython.org/",
                    }
 DOWNLOAD_URL     = "https://pypi.org/project/{}".format(NAME)
-LICENSE          = "wxWindows Library License (https://opensource.org/licenses/wxwindows.php)"
 PLATFORMS        = "WIN32,WIN64,OSX,POSIX"
 KEYWORDS         = "GUI,wx,wxWindows,wxWidgets,cross-platform,user-interface,awesome"
 
@@ -433,7 +432,7 @@ setup(name             = NAME,
           url              = URL,
           project_urls     = PROJECT_URLS,
           download_url     = DOWNLOAD_URL,
-          license          = LICENSE,
+        #   license          = LICENSE,
           platforms        = PLATFORMS,
           classifiers      = [c for c in CLASSIFIERS.split("\n") if c],
           keywords         = KEYWORDS,

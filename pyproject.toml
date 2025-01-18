@@ -1,13 +1,10 @@
 [project]
 name = "wxPython"
 requires-python = ">=3.9"
-dynamic = ["license", "readme", "version"]
+dynamic = ["readme", "version"]
 description = "Cross platform GUI toolkit for Python, \"Phoenix\" version"
-# readme = "README.rst"
-# license = "wxWindows Library License (https://opensource.org/licenses/wxwindows.php)"
-authors = [
-    { name = "Robin Dunn", email = "robin@alldunn.com" },
-]
+license.text = "wxWindows"
+authors = [{ name = "Robin Dunn", email = "robin@alldunn.com" }]
 keywords = [
     "GUI",
     "awesome",
@@ -74,3 +71,6 @@ requires = [
     "sip == 6.9.1",
 ]
 build-backend = "setuptools.build_meta:__legacy__"
+
+[tool.setuptools]
+license-files = ["LICENSE.txt"]
