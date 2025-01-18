@@ -977,7 +977,7 @@ def getVisCVersion():
         raise RuntimeError('getMSVCInfo has not been called yet.')
     # Convert a float like 14.28 to 140, for historical reasons
     # TODO: decide on switching to 142, 143, etc.??
-    ver = str(int(MSVCinfo.vc_ver)) + '0'
+    ver = str(int(MSVCinfo["vc_ver"])) + '0'
     return ver
 
 
@@ -990,7 +990,7 @@ def getExpectedVisCVersion():
     """
     if MSVCinfo is None:
         raise RuntimeError('getMSVCInfo has not been called yet.')
-    py_ver = MSVCinfo.py_ver
+    py_ver = MSVCinfo["py_ver"]
     if py_ver in ((3, 5), (3, 6), (3, 7), (3, 8)):
         min_ver = 14.0
     elif py_ver in ((3, 9), (3, 10)):
