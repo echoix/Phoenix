@@ -1861,10 +1861,10 @@ def cmd_build_others(options, args):
     # wxPython uses. So far, it's just the wx.svg package
     cmdTimer = CommandTimer('build_others')
 
-    cmd = [PYTHON, 'setup-wxsvg.py', 'build_ext', '--inplace']
-    if options.verbose:
-        cmd.append('--verbose')
-    runcmd(cmd)
+    # cmd = [PYTHON, 'setup-wxsvg.py', 'build_ext', '--inplace']
+    # if options.verbose:
+    #     cmd.append('--verbose')
+    # runcmd(cmd)
 
 
 def cmd_touch_others(options, args):
