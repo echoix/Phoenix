@@ -2196,7 +2196,7 @@ def cmd_sdist(options, args):
 
     generateVersionFiles(cfg)
     # copy .py files that need to go into the root wx package dir
-    for name in ['src/__init__.py', 'src/gizmos.py',]:
+    for name in ['src/__init__.py']:
         copyFile(name, cfg.PKGDIR, verbose=True)
 
     # copy Phoenix's generated code into the archive tree
