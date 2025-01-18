@@ -2054,6 +2054,8 @@ def cmd_clean_py(options, args):
         for wc in [ 'wx*' + wxversion2_nodot + msw.dll_type + '*.dll',
                     'wx*' + wxversion3_nodot + msw.dll_type + '*.dll']:
             files += glob.glob(opj(cfg.PKGDIR, wc))
+    keep_files = ["wx/gizmos.py"]
+    files = [file for file in files if file not in keep_files]
     delFiles(files)
 
     # Also remove any remaining DLLs just to make sure. This includes the C++
