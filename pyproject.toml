@@ -1,14 +1,3 @@
-[build-system]
-requires = [
-    "setuptools>=61",
-    "attrdict3 ; sys_platform == 'win32'",
-    "cython == 3.0.10",
-    "requests",
-    "requests[security]",
-    "sip == 6.9.1",
-]
-build-backend = "setuptools.build_meta:__legacy__"
-
 [project]
 name = "wxPython"
 requires-python = ">=3.9"
@@ -74,3 +63,14 @@ Documentation = "https://docs.wxpython.org/"
 Download = "https://pypi.org/project/wxPython"
 Homepage = "https://wxPython.org/"
 Source = "https://github.com/wxWidgets/Phoenix"
+
+[build-system]
+requires = [
+    "setuptools>=61",
+    "attrdict3 ; sys_platform == 'win32'",
+    "cython == 3.0.10",
+    "requests",
+    "requests[security]",
+    "sip == 6.9.1",
+]
+build-backend = "setuptools.build_meta:__legacy__"
