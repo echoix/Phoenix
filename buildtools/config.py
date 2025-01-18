@@ -1009,8 +1009,6 @@ def getMSVCInfo(PYTHON, arch, set_env=False):
     if MSVCinfo is not None:
         return MSVCinfo
 
-    from attrdict import AttrDict
-
     # Note that it starts with a monkey-patch in setuptools.msvc to
     # workaround this issue: pypa/setuptools#1902
     cmd = \
@@ -1025,29 +1023,13 @@ def getMSVCInfo(PYTHON, arch, set_env=False):
         "print(env)"
     cmd = cmd.format(arch)
     env = eval(runcmd('"%s" -c "%s"' % (PYTHON, cmd), getOutput=True, echoCmd=False))
-    print("getMSVCInfo env variable is: ")
-    print(env)
     info = dict(env)
-    info2 = AttrDict(env)
-    from pprint import pprint
-    print("getMSVCInfo info2 is (pprint): ")
-    pprint(info2)
-    print("getMSVCInfo info2 is (print): ")
-    print(info2)
-    print("getMSVCInfo is: ")
-    pprint(info)
-    print(info)
-    # print("getMSVCInfo vars is: ")
-    # print(vars(info))
+
     if set_env:
         os.environ['PATH'] =    info["path"]
         os.environ['INCLUDE'] = info["include"]
         os.environ['LIB'] =     info["lib"]
         os.environ['LIBPATH'] = info["libpath"]
-        # os.environ['PATH'] =    info.path
-        # os.environ['INCLUDE'] = info.include
-        # os.environ['LIB'] =     info.lib
-        # os.environ['LIBPATH'] = info.libpath
 
         # We already have everything we need, tell distutils to not go hunting
         # for it all again if it happens to be called.
