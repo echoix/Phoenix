@@ -510,6 +510,12 @@ def parseArgs(args) -> tuple[optparse.Values, list[str]]:
         import buildtools.config
         buildtools.config.runSilently = True
 
+    print("parseArgs options is ", options)
+    print("parseArgs options type is ", type(options))
+    print("parseArgs options vars is ", vars(options))
+    print("parseArgs args is ", args)
+    print("parseArgs args type is ", type(args))
+    print("parseArgs args vars is ", vars(args))
     return options, args
 
 
