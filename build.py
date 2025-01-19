@@ -479,7 +479,7 @@ def makeOptionParser():
     return parser
 
 
-def parseArgs(args):
+def parseArgs(args) -> tuple[optparse.Values, list[str]]:
     # If WXPYTHON_BUILD_ARGS is set in the environment, split it and add to args
     if os.environ.get('WXPYTHON_BUILD_ARGS', None):
         args += shlex.split(os.environ.get('WXPYTHON_BUILD_ARGS'))
