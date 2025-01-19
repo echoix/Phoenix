@@ -1,4 +1,4 @@
-# cython: language_level=3
+# cython: language_level=3, embedsignature=True
 #----------------------------------------------------------------------
 # Name:        wx.svg._nanosvg.pyx
 # Purpose:     Cython-based wrappers for the nanosvg C code. See
