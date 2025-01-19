@@ -514,10 +514,10 @@ def parseArgs(args) -> tuple[optparse.Values, list[str]]:
 
     print("parseArgs options is ", options)
     print("parseArgs options type is ", type(options))
-    print("parseArgs options vars is ", vars(options))
+    print("parseArgs options dir is ", dir(options))
     print("parseArgs args is ", args)
     print("parseArgs args type is ", type(args))
-    print("parseArgs args vars is ", vars(args))
+    print("parseArgs args dir is ", dir(args))
     return options, args
 
 
@@ -1280,6 +1280,10 @@ def cmd_bdist_docs(options, args):
 
 
 def cmd_sip(options, args):
+    print("cmd_sip options is ", options)
+    print("cmd_sip options type is ", type(options))
+    # print("cmd_sip options vars is ", vars(options))
+    print("cmd_sip options dir is ", dir(options))
     cmdTimer = CommandTimer('sip')
     cfg = Config()
     pwd = pushDir(cfg.ROOT_DIR)
