@@ -1,4 +1,5 @@
 # cython: language_level=3, embedsignature=True
+# distutils: define-macros = [("NANOSVG_IMPLEMENTATION", "1"), ("NANOSVGRAST_IMPLEMENTATION", "1"), ("NANOSVG_ALL_COLOR_KEYWORDS", "1"), ("ED_DEF_TEST", "23")]
 #----------------------------------------------------------------------
 # Name:        wx.svg._nanosvg.pyx
 # Purpose:     Cython-based wrappers for the nanosvg C code. See
