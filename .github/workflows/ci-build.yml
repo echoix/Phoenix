@@ -38,6 +38,41 @@ env:
 #---------------------------------------------------------------------------
 
 jobs:
+  build-install-pip-git:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: 
+          - ubuntu-24.04
+          - windows-2022
+          - macos-13
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        architecture: ["x86", "x64"]
+        include:
+          - os: macos-14
+            python-version: "3.13"
+            architecture: "arm64"
+          - os: macos-15
+            python-version: "3.9"
+            architecture: "arm64"
+        # Exclude x86 configs on non-Windows OSs
+        exclude:
+          - os: ubuntu-22.04
+            architecture: x86
+          - os: macos-13
+            architecture: x86
+          # Only build oldest and newest Pythons on PRs
+          - python-version: ${{ github.event_name == 'pull_request' && '3.10' }}
+          - python-version: ${{ github.event_name == 'pull_request' && '3.11' }}
+          - python-version: ${{ github.event_name == 'pull_request' && '3.12' }}
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+      - run: pip install pip install git+${{github.repositoryUrl}}@${{ github.ref }}
   # Build a wxPython source archive, and save it as an artifact for use in the
   # job that builds the wheels.
   build-source-dist:
