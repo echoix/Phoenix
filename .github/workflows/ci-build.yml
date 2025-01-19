@@ -71,7 +71,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-          cache: "pip"
+          # cache: "pip"
       - run: pip install pip install git+${{github.repositoryUrl}}@${{ github.ref }}
   # Build a wxPython source archive, and save it as an artifact for use in the
   # job that builds the wheels.
