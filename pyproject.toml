@@ -77,7 +77,7 @@ license-files = ["LICENSE.txt"]
 
 [[tool.setuptools.ext-modules]]
 name = "wx.svg._nanosvg"
-sources = ["wx/svg/_nanosvg.pyx", "wx/svg/_nanosvg.pxd"]
+sources = ["wx/svg/_nanosvg.pyx"]
 include-dirs = ["ext/nanosvg/src"]
 define-macros = [
     [
