@@ -99,7 +99,7 @@ jobs:
         with:
           python-version: "3.13"
           # cache: "pip"
-      - run: pip install "wxPython @ git+${{ github.server_url }}/${{ github.repository }}.git@${{ github.ref }}" --verbose --verbose
+      - run: pip install -U "wxPython @ git+${{ github.server_url }}/${{ github.repository }}.git@${{ github.ref }}" --verbose --verbose
   # Build a wxPython source archive, and save it as an artifact for use in the
   # job that builds the wheels.
   build-source-dist:
