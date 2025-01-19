@@ -387,7 +387,7 @@ class CustomBuildPyCommand(Command):
         # self.osx_cocoa: Union[bool, None] = None
         # self.destdir: Union[Path, str, None] = None
         # self.mac_framework: Union[bool, None] = None
-        # self.build_dir: Union[Path, str, None] = None
+        self.build_dir: Union[Path, str, None] = None
         # self.no_config: Union[bool, None] = None
         # self.force_config: Union[bool, None] = None
         # self.extra_make: Union[str, None] = None
@@ -423,8 +423,8 @@ class CustomBuildPyCommand(Command):
         # with suppress(Exception):
         #     self.destdir = Path(self.destdir)
         # self.mac_framework = False if self.mac_framework is None else self.mac_framework
-        # with suppress(Exception):
-        #     self.build_dir = Path(self.build_dir)
+        with suppress(Exception):
+            self.build_dir = Path(self.build_dir)
         # self.no_config = False if self.no_config is None else self.no_config
         # self.force_config = False if self.force_config is None else self.force_config
         # self.extra_make = self.extra_make
@@ -455,7 +455,7 @@ class CustomBuildPyCommand(Command):
                 # "osx_cocoa": self.osx_cocoa,
                 # "destdir": self.destdir,
                 # "mac_framework": self.mac_framework,
-                # "build_dir": self.build_dir,
+                "build_dir": self.build_dir,
                 # "no_config": self.no_config,
                 # "force_config": self.force_config,
                 # "extra_make": self.extra_make,
