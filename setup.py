@@ -14,12 +14,13 @@ import sys, os
 import glob
 import stat
 
-from setuptools                     import setup, find_packages
-from distutils.command.build        import build as orig_build
+from contextlib import suppress
+from pathlib import Path
 from typing import Union
 
 from setuptools                     import Command, setup, find_packages
 from setuptools.command.build       import build as orig_build
+from setuptools.command.build_py    import build_py as orig_build_py
 from setuptools.command.install     import install as orig_install
 from setuptools.command.bdist_egg   import bdist_egg as orig_bdist_egg
 from setuptools.command.sdist       import sdist as orig_sdist
@@ -274,6 +275,195 @@ class CustomEtgCommand(Command):
         wx_build_py_script.cmd_etg(options, None)
 
 
+class CustomBuildWxCommand(Command):
+    description = "wxPython: " + wx_build_py_script.cmd_build_wx_description
+
+    def initialize_options(self) -> None:
+        self.use_syswx: Union[bool, None] = None
+        self.no_msedge: Union[bool, None] = None
+        self.jobs: Union[int, None] = None
+        self.cairo: Union[bool, None] = None
+        self.jom: Union[bool, None] = None
+        self.osx_carbon: Union[bool, None] = None
+        self.osx_cocoa: Union[bool, None] = None
+        self.destdir: Union[Path, str, None] = None
+        self.prefix: Union[str, None] = None
+        self.mac_framework: Union[bool, None] = None
+        self.gtk2: Union[bool, None] = None
+        self.gtk3: Union[bool, None] = None
+        self.build_dir: Union[Path, str, None] = None
+        self.mac_arch: Union[str, None] = None
+        self.no_config: Union[bool, None] = None
+        self.force_config: Union[bool, None] = None
+        self.debug: Union[bool, None] = None
+        self.extra_make: Union[str, None] = None
+        self.no_magic: Union[bool, None] = None
+        self.no_allmo: Union[bool, None] = None
+        self.both: Union[bool, None] = None
+
+    def finalize_options(self) -> None:
+        self.use_syswx = False if self.use_syswx is None else self.use_syswx
+        self.no_msedge = False if self.no_msedge is None else self.no_msedge
+        self.jobs = (
+            self.jobs
+            if self.jobs is not None
+            else self.get_finalized_command("build").parallel
+        )
+        self.cairo = False if self.cairo is None else self.cairo
+        self.jom = False if self.jom is None else self.jom
+        self.osx_carbon = False if self.osx_carbon is None else self.osx_carbon
+        self.osx_cocoa = True if self.osx_cocoa is None else self.osx_cocoa
+        with suppress(Exception):
+            self.destdir = Path(self.destdir)
+        self.prefix = self.prefix
+        self.mac_framework = False if self.mac_framework is None else self.mac_framework
+        self.gtk2 = False if self.gtk2 is None else self.gtk2
+        self.gtk3 = True if self.gtk3 is None else self.gtk3
+        with suppress(Exception):
+            self.build_dir = Path(self.build_dir)
+        with suppress(Exception):
+            self.mac_arch = self.mac_arch
+        self.no_config = False if self.no_config is None else self.no_config
+        self.force_config = False if self.force_config is None else self.force_config
+        self.debug = self.get_finalized_command("build").debug
+        self.extra_make = self.extra_make
+        self.no_magic = True if self.no_magic is None else self.no_magic
+        self.no_allmo = False if self.no_allmo is None else self.no_allmo
+        self.both = False if self.both is None else self.both
+
+    def run(self) -> None:
+        options = optparse.Values(
+            {
+                "use_syswx": self.use_syswx,
+                "no_msedge": self.no_msedge,
+                "jobs": self.jobs,
+                "cairo": self.cairo,
+                "jom": self.jom,
+                "osx_carbon": self.osx_carbon,
+                "osx_cocoa": self.osx_cocoa,
+                "destdir": self.destdir,
+                "prefix": self.prefix,
+                "mac_framework": self.mac_framework,
+                "gtk2": self.gtk2,
+                "gtk3": self.gtk3,
+                "build_dir": self.build_dir,
+                "mac_arch": self.mac_arch,
+                "no_config": self.no_config,
+                "force_config": self.force_config,
+                "debug": self.debug,
+                "extra_make": self.extra_make,
+                "no_magic": self.no_magic,
+                "no_allmo": self.no_allmo,
+                "both": self.both,
+            }
+        )
+        wx_build_py_script.cmd_build_wx(options, None)
+
+
+class CustomBuildPyCommand(Command):
+    description = "wxPython: " + wx_build_py_script.cmd_build_py_description
+
+    def initialize_options(self) -> None:
+        self.release: Union[bool, None] = None
+        self.use_syswx: Union[bool, None] = None
+        self.prefix: Union[str, None] = None
+        self.verbose: Union[bool, None] = None
+        self.debug: Union[bool, None] = None
+        self.both: Union[bool, None] = None
+        self.mac_arch: Union[str, None] = None
+        self.jobs: Union[int, None] = None
+        self.relwithdebug: Union[bool, None] = None
+        self.gtk2: Union[bool, None] = None
+        self.gtk3: Union[bool, None] = None
+        self.no_magic: Union[bool, None] = None
+        self.regenerate_sysconfig: Union[bool, None] = None
+        self.extra_waf: Union[str, None] = None
+        self.dump_waf_log: Union[bool, None] = None
+        self.cairo: Union[bool, None] = None
+        # self.no_msedge: Union[bool, None] = None
+        # self.jom: Union[bool, None] = None
+        # self.osx_carbon: Union[bool, None] = None
+        # self.osx_cocoa: Union[bool, None] = None
+        # self.destdir: Union[Path, str, None] = None
+        # self.mac_framework: Union[bool, None] = None
+        # self.build_dir: Union[Path, str, None] = None
+        # self.no_config: Union[bool, None] = None
+        # self.force_config: Union[bool, None] = None
+        # self.extra_make: Union[str, None] = None
+        # self.no_allmo: Union[bool, None] = None
+
+    def finalize_options(self) -> None:
+        self.release = False if self.release is None else self.release
+        self.use_syswx = False if self.use_syswx is None else self.use_syswx
+        self.prefix = self.prefix
+        self.verbose = False if self.verbose is None else self.verbose
+        self.debug = self.get_finalized_command("build").debug
+        self.both = False if self.both is None else self.both
+        self.mac_arch = self.mac_arch
+        self.jobs = (
+            self.jobs
+            if self.jobs is not None
+            else self.get_finalized_command("build").parallel
+        )
+        self.relwithdebug = False if self.relwithdebug is None else self.relwithdebug
+        self.gtk2 = False if self.gtk2 is None else self.gtk2
+        self.gtk3 = True if self.gtk3 is None else self.gtk3
+        self.no_magic = True if self.no_magic is None else self.no_magic
+        self.regenerate_sysconfig = (
+            False if self.regenerate_sysconfig is None else self.regenerate_sysconfig
+        )
+        self.extra_waf = self.extra_waf
+        self.dump_waf_log = False if self.dump_waf_log is None else self.dump_waf_log
+        self.cairo = False if self.cairo is None else self.cairo
+        # self.no_msedge = False if self.no_msedge is None else self.no_msedge
+        # self.jom = False if self.jom is None else self.jom
+        # self.osx_carbon = False if self.osx_carbon is None else self.osx_carbon
+        # self.osx_cocoa = True if self.osx_cocoa is None else self.osx_cocoa
+        # with suppress(Exception):
+        #     self.destdir = Path(self.destdir)
+        # self.mac_framework = False if self.mac_framework is None else self.mac_framework
+        # with suppress(Exception):
+        #     self.build_dir = Path(self.build_dir)
+        # self.no_config = False if self.no_config is None else self.no_config
+        # self.force_config = False if self.force_config is None else self.force_config
+        # self.extra_make = self.extra_make
+        # self.no_allmo = False if self.no_allmo is None else self.no_allmo
+
+    def run(self) -> None:
+        options = optparse.Values(
+            {
+                "release": self.release,
+                "use_syswx": self.use_syswx,
+                "prefix": self.prefix,
+                "verbose": self.verbose,
+                "debug": self.debug,
+                "both": self.both,
+                "mac_arch": self.mac_arch,
+                "jobs": self.jobs,
+                "relwithdebug": self.relwithdebug,
+                "gtk2": self.gtk2,
+                "gtk3": self.gtk3,
+                "no_magic": self.no_magic,
+                "regenerate_sysconfig": self.regenerate_sysconfig,
+                "extra_waf": self.extra_waf,
+                "dump_waf_log": self.dump_waf_log,
+                "cairo": self.cairo,
+                # "no_msedge": self.no_msedge,
+                # "jom": self.jom,
+                # "osx_carbon": self.osx_carbon,
+                # "osx_cocoa": self.osx_cocoa,
+                # "destdir": self.destdir,
+                # "mac_framework": self.mac_framework,
+                # "build_dir": self.build_dir,
+                # "no_config": self.no_config,
+                # "force_config": self.force_config,
+                # "extra_make": self.extra_make,
+                # "no_allmo": self.no_allmo,
+            }
+        )
+        wx_build_py_script.cmd_build_py(options, None)
+
+
 class CustomSipCommand(Command):
     description = "wxPython: " + wx_build_py_script.cmd_sip_description
 
@@ -296,9 +486,11 @@ class CustomSipCommand(Command):
 
 class CustomBuild(orig_build):
     sub_commands = [
-        # ("dox", None),
-        # ("etg", None),
+        ("build_wx", None),
+        ("dox", None),
+        ("etg", None),
         ("sip", None),
+        # ("wx_build_py", None),
     ] + orig_build.sub_commands
 
 
@@ -308,10 +500,19 @@ class CustomBuild(orig_build):
 
 class CustomSdist(orig_sdist):
     sub_commands = [
+        ("build_wx", None),
         ("dox", None),
         ("etg", None),
         ("sip", None),
+        ("wx_build_py", None),
     ] + orig_sdist.sub_commands
+
+
+class CustomBuildPy(orig_build_py):
+    sub_commands = [
+        ("wx_build_py", None),
+    ] + orig_sdist.sub_commands
+
 
 # class CustomBdistWheel(orig_bdist_wheel):
 #     sub_commands = [
@@ -319,7 +520,6 @@ class CustomSdist(orig_sdist):
 #         ("etg", None),
 #         ("sip", None),
 #     ] + orig_bdist_wheel.sub_commands
-
 
 
 # Map these new classes to the appropriate distutils command names.
@@ -331,9 +531,12 @@ CMDCLASS = {
     "dox": CustomDoxCommand,
     "etg": CustomEtgCommand,
     "sip": CustomSipCommand,
+    "build_wx": CustomBuildWxCommand,
+    "wx_build_py": CustomBuildPyCommand,
+    "build_py": CustomBuildPy,
 }
-if haveWheel:
-    CMDCLASS['bdist_wheel'] = wx_bdist_wheel
+# if haveWheel:
+#     CMDCLASS['bdist_wheel'] = wx_bdist_wheel
 
 
 

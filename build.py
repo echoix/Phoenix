@@ -115,6 +115,8 @@ MS_edge_url = 'https://www.nuget.org/api/v2/package/Microsoft.Web.WebView2/{}'.f
 cmd_dox_description = "Run Doxygen to produce the XML file used by ETG scripts"
 cmd_sip_description = "Run sip to generate the C++ wrapper source"
 cmd_etg_description = "Run the ETG scripts that are out of date to update their SIP files and their Sphinx input files"
+cmd_build_wx_description = "Do only the wxWidgets part of the build"
+cmd_build_py_description = "Build wxPython only"
 
 def usage():
     print ("""\
