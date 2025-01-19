@@ -1008,8 +1008,7 @@ def getMSVCInfo(PYTHON, arch, set_env=False):
     global MSVCinfo
     if MSVCinfo is not None:
         return MSVCinfo
-    if not PYTHON:
-        PYTHON = "python" # TODO: Hack when building through pip
+
     # Note that it starts with a monkey-patch in setuptools.msvc to
     # workaround this issue: pypa/setuptools#1902
     cmd = \
