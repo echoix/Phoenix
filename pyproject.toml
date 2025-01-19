@@ -35,7 +35,7 @@ classifiers = [
     "Topic :: Software Development :: User Interfaces",
 ]
 dependencies = [
-    "numpy ; python_version >= '3.0' and python_version < '3.12'",
+    "numpy ; python_version >= '3.0'",
     "numpy < 1.17 ; python_version <= '2.7'",
     "six",
     "typing-extensions; python_version < '3.11'",
