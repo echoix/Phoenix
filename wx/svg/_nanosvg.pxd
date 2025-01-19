@@ -1,3 +1,4 @@
+# cython: language_level=3, embedsignature=True
 #----------------------------------------------------------------------
 # Name:        _nanosvg.pdx
 # Purpose:     Cython decarlations for the items in the nanosvg code
