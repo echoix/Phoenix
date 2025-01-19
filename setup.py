@@ -259,6 +259,7 @@ class CustomDoxCommand(Command):
         pass
 
     def run(self) -> None:
+        wx_build_py_script.setPythonVersion(None)
         wx_build_py_script.cmd_dox(None, None)
 
 
@@ -273,6 +274,7 @@ class CustomEtgCommand(Command):
 
     def run(self) -> None:
         options = optparse.Values({"nodoc": self.nodoc})
+        wx_build_py_script.setPythonVersion(None)
         wx_build_py_script.cmd_etg(options, None)
 
 
@@ -358,6 +360,7 @@ class CustomBuildWxCommand(Command):
                 "both": self.both,
             }
         )
+        wx_build_py_script.setPythonVersion(None)
         wx_build_py_script.cmd_build_wx(options, None)
 
 
@@ -462,6 +465,7 @@ class CustomBuildPyCommand(Command):
                 # "no_allmo": self.no_allmo,
             }
         )
+        wx_build_py_script.setPythonVersion(None)
         wx_build_py_script.cmd_build_py(options, None)
 
 
@@ -478,6 +482,7 @@ class CustomSipCommand(Command):
 
     def run(self) -> None:
         options = optparse.Values({"keep_hash_lines": self.keep_hash_lines})
+        wx_build_py_script.setPythonVersion(None)
         wx_build_py_script.cmd_sip(options, None)
 
 
