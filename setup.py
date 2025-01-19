@@ -28,11 +28,7 @@ except ImportError:
 
 from buildtools.config import Config, msg, opj, runcmd, canGetSOName, getSOName
 import buildtools.version as version
-try:
-    from Cython.Build import cythonize
-    have_cython = True
-except ImportError:
-    have_cython = False
+
 
 # Create a buildtools.config.Configuration object
 cfg = Config(noWxConfig=True)
