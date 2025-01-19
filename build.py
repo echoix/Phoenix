@@ -112,6 +112,9 @@ MS_edge_version = '1.0.1185.39'
 MS_edge_url = 'https://www.nuget.org/api/v2/package/Microsoft.Web.WebView2/{}'.format(MS_edge_version)
 
 #---------------------------------------------------------------------------
+cmd_dox_description = "Run Doxygen to produce the XML file used by ETG scripts"
+cmd_sip_description = "Run sip to generate the C++ wrapper source"
+cmd_etg_description = "Run the ETG scripts that are out of date to update their SIP files and their Sphinx input files"
 
 def usage():
     print ("""\

@@ -69,7 +69,8 @@ requires = [
     "requests[security]",
     "sip == 6.9.1",
 ]
-build-backend = "setuptools.build_meta:__legacy__"
+build-backend = "setuptools.build_meta"
+# build-backend = "setuptools.build_meta:__legacy__"
 
 [tool.setuptools]
 license-files = ["LICENSE.txt"]
@@ -78,17 +79,17 @@ license-files = ["LICENSE.txt"]
 name = "wx.svg._nanosvg"
 sources = ["wx/svg/_nanosvg.pyx"]
 include-dirs = ["ext/nanosvg/src"]
-define-macros = [
-    [
-        "NANOSVG_IMPLEMENTATION",
-        "1",
-    ],
-    [
-        "NANOSVGRAST_IMPLEMENTATION",
-        "1",
-    ],
-    [
-        "NANOSVG_ALL_COLOR_KEYWORDS",
-        "1",
-    ],
-]
+# define-macros = [
+#     [
+#         "NANOSVG_IMPLEMENTATION",
+#         "1",
+#     ],
+#     [
+#         "NANOSVGRAST_IMPLEMENTATION",
+#         "1",
+#     ],
+#     [
+#         "NANOSVG_ALL_COLOR_KEYWORDS",
+#         "1",
+#     ],
+# ]

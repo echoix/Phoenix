@@ -11,7 +11,8 @@ recursive-include   wx/locale **
 recursive-include   wx/include **
 recursive-include   license  *.txt
 include             LICENSE.txt
-graft               docs
+graft               buildtools
+graft               ext/wxWidgets
 prune               docs/sphinx/build
 
 recursive-exclude   wx  .git
@@ -21,3 +22,4 @@ recursive-exclude   wx  __pycache__
 exclude             wx/svg/*.c 
 
 graft               ext/nanosvg/src
+include             build.py

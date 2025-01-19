@@ -9,15 +9,24 @@
 # License:     wxWindows License
 #----------------------------------------------------------------------
 
+import optparse
 import sys, os
 import glob
 import stat
 
 from setuptools                     import setup, find_packages
 from distutils.command.build        import build as orig_build
+from typing import Union
+
+from setuptools                     import Command, setup, find_packages
+from setuptools.command.build       import build as orig_build
 from setuptools.command.install     import install as orig_install
 from setuptools.command.bdist_egg   import bdist_egg as orig_bdist_egg
 from setuptools.command.sdist       import sdist as orig_sdist
+
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+import build as wx_build_py_script
+
 try:
     from wheel.bdist_wheel import bdist_wheel as orig_bdist_wheel
     haveWheel = True
@@ -235,18 +244,94 @@ class wx_sdist(orig_sdist):
         # On the other hand, PyPI's upload size limit is waaaaaaaaay too
         # small so it probably doesn't matter too much...
         sdist_file = opj(self.dist_dir, self.distribution.get_fullname()+'.tar.gz')
-        self.distribution.dist_files.append(('sdist', '', sdist_file))
+        self.distribution.dist_files.append(("sdist", "", sdist_file))
 
+
+class CustomDoxCommand(Command):
+    description = "wxPython: " + wx_build_py_script.cmd_dox_description
+
+    def initialize_options(self) -> None:
+        pass
+
+    def finalize_options(self) -> None:
+        pass
+
+    def run(self) -> None:
+        wx_build_py_script.cmd_dox(None, None)
+
+
+class CustomEtgCommand(Command):
+    description = "wxPython: " + wx_build_py_script.cmd_etg_description
+
+    def initialize_options(self) -> None:
+        self.nodoc: Union[bool, None] = None
+
+    def finalize_options(self) -> None:
+        self.nodoc = True if self.nodoc is None else self.nodoc
+
+    def run(self) -> None:
+        options = optparse.Values({"nodoc": self.nodoc})
+        wx_build_py_script.cmd_etg(options, None)
+
+
+class CustomSipCommand(Command):
+    description = "wxPython: " + wx_build_py_script.cmd_sip_description
+
+    def initialize_options(self) -> None:
+        self.keep_hash_lines: Union[None, bool] = None
+
+    def finalize_options(self) -> None:
+        self.keep_hash_lines = (
+            False if self.keep_hash_lines is None else self.keep_hash_lines
+        )
+
+    def run(self) -> None:
+        options = optparse.Values({"keep_hash_lines": self.keep_hash_lines})
+        wx_build_py_script.cmd_sip(options, None)
+
+
+# class CustomBuild(wx_build):
+#     sub_commands = [('sip', None)] + wx_build.sub_commands
+
+
+class CustomBuild(orig_build):
+    sub_commands = [
+        # ("dox", None),
+        # ("etg", None),
+        ("sip", None),
+    ] + orig_build.sub_commands
+
+
+# class CustomSdist(wx_sdist):
+#     sub_commands = [('sip', None)] + wx_sdist.sub_commands
+
+
+class CustomSdist(orig_sdist):
+    sub_commands = [
+        ("dox", None),
+        ("etg", None),
+        ("sip", None),
+    ] + orig_sdist.sub_commands
+
+# class CustomBdistWheel(orig_bdist_wheel):
+#     sub_commands = [
+#         ("dox", None),
+#         ("etg", None),
+#         ("sip", None),
+#     ] + orig_bdist_wheel.sub_commands
 
 
 
 # Map these new classes to the appropriate distutils command names.
 CMDCLASS = {
-    'build'       : wx_build,
-    'bdist_egg'   : wx_bdist_egg,
-    'install'     : wx_install,
-    'sdist'       : wx_sdist,
-    }
+    "build": CustomBuild,
+    # 'bdist_egg'   : wx_bdist_egg,
+    # 'install'     : wx_install,
+    "sdist": CustomSdist,
+    "dox": CustomDoxCommand,
+    "etg": CustomEtgCommand,
+    "sip": CustomSipCommand,
+}
 if haveWheel:
     CMDCLASS['bdist_wheel'] = wx_bdist_wheel
 
@@ -276,31 +361,31 @@ def wx_copy_file(src, dst, preserve_mode=1, preserve_times=1, update=0,
             os.symlink(linkdst, dst)
         return (dst, 1)
 
-import distutils.file_util
-orig_copy_file = distutils.file_util.copy_file
-distutils.file_util.copy_file = wx_copy_file
+
+# import distutils.file_util
+# orig_copy_file = distutils.file_util.copy_file
+# distutils.file_util.copy_file = wx_copy_file
 
 
+# def wx_copy_tree(src, dst, preserve_mode=1, preserve_times=1,
+#                  preserve_symlinks=0, update=0, verbose=1, dry_run=0):
+#     return orig_copy_tree(
+#         src, dst, preserve_mode, preserve_times, 1, update, verbose, dry_run)
 
-def wx_copy_tree(src, dst, preserve_mode=1, preserve_times=1,
-                 preserve_symlinks=0, update=0, verbose=1, dry_run=0):
-    return orig_copy_tree(
-        src, dst, preserve_mode, preserve_times, 1, update, verbose, dry_run)
-
-import distutils.dir_util
-orig_copy_tree = distutils.dir_util.copy_tree
-distutils.dir_util.copy_tree = wx_copy_tree
+# import distutils.dir_util
+# orig_copy_tree = distutils.dir_util.copy_tree
+# distutils.dir_util.copy_tree = wx_copy_tree
 
 
-# Monkey-patch make_writeable too. Sometimes the link is copied before the
-# target, and the original make_writable will fail on a link to a missing
-# target.
-def wx_make_writable(target):
-    if not os.path.islink(target):
-        os.chmod(target, os.stat(target).st_mode | stat.S_IWRITE)
+# # Monkey-patch make_writeable too. Sometimes the link is copied before the
+# # target, and the original make_writable will fail on a link to a missing
+# # target.
+# def wx_make_writable(target):
+#     if not os.path.islink(target):
+#         os.chmod(target, os.stat(target).st_mode | stat.S_IWRITE)
 
-import setuptools.command.build_py
-setuptools.command.build_py.make_writable = wx_make_writable
+# import setuptools.command.build_py
+# setuptools.command.build_py.make_writable = wx_make_writable
 
 
 #----------------------------------------------------------------------
@@ -351,7 +436,6 @@ setup(name             = NAME,
           keywords         = KEYWORDS,
           zip_safe         = False,
           include_package_data = True,
-
           packages         = WX_PKGLIST,
           ext_package      = cfg.PKGDIR,
           scripts          = SCRIPTS,
