@@ -64,7 +64,6 @@ Source = "https://github.com/wxWidgets/Phoenix"
 [build-system]
 requires = [
     "setuptools>=74.1.0",
-    "attrdict3 ; sys_platform == 'win32'",
     "cython == 3.0.10",
     "requests",
     "requests[security]",
