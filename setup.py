@@ -161,24 +161,28 @@ class wx_bdist_egg(orig_bdist_egg):
     def finalize_options(self):
         orig_bdist_egg.finalize_options(self)
 
-        # # Redo the calculation of the egg's filename since we always have
-        # # extension modules, but they are not built by setuptools so it
-        # # doesn't know about them.
-        # from pkg_resources import Distribution
-        # from sysconfig import get_python_version
-        # basename = Distribution(
-        #     None, None, self.ei_cmd.egg_name, self.ei_cmd.egg_version,
-        #     get_python_version(),
-        #     self.plat_name
-        # ).egg_name()
-        # self.egg_output = os.path.join(self.dist_dir, basename+'.egg')
+        # TODO: echoix
+        # Redo the calculation of the egg's filename since we always have
+        # extension modules, but they are not built by setuptools so it
+        # doesn't know about them.
+        from pkg_resources import Distribution
+        from sysconfig import get_python_version
+        basename = Distribution(
+            None, None, self.ei_cmd.egg_name, self.ei_cmd.egg_version,
+            get_python_version(),
+            self.plat_name
+        ).egg_name()
+        self.egg_output = os.path.join(self.dist_dir, basename+'.egg')
+        # TODO: echoix
 
 
     def run(self):
-        # # Ensure that there is a basic library build for bdist_egg to pull from.
-        # self.run_command("build")
+        # TODO: echoix
+        # Ensure that there is a basic library build for bdist_egg to pull from.
+        self.run_command("build")
 
-        # _cleanup_symlinks(self)
+        _cleanup_symlinks(self)
+        # TODO: echoix
 
         # Run the default bdist_egg command
         orig_bdist_egg.run(self)
