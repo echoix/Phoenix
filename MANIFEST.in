@@ -13,7 +13,9 @@ recursive-include   license  *.txt
 include             LICENSE.txt
 graft               buildtools
 graft               ext/wxWidgets
+# graft               docs
 prune               docs/sphinx/build
+prune               docs/sphinx
 
 recursive-exclude   wx  .git
 recursive-exclude   wx  *.pyc
