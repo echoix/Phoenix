@@ -1,4 +1,5 @@
 # cython: language_level=3, embedsignature=True
+# distutils: include_dirs = ext/nanosvg/src
 # distutils: define-macros = [("NANOSVG_IMPLEMENTATION", "1"), ("NANOSVGRAST_IMPLEMENTATION", "1"), ("NANOSVG_ALL_COLOR_KEYWORDS", "1"), ("ED_DEF_TEST", "23")]
 #----------------------------------------------------------------------
 # Name:        wx.svg._nanosvg.pyx

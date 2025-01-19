@@ -24,6 +24,7 @@ from setuptools.command.build_py    import build_py as orig_build_py
 from setuptools.command.install     import install as orig_install
 from setuptools.command.bdist_egg   import bdist_egg as orig_bdist_egg
 from setuptools.command.sdist       import sdist as orig_sdist
+from Cython.Build import cythonize
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 import build as wx_build_py_script
@@ -646,4 +647,5 @@ setup(name             = NAME,
           headers          = HEADERS,
           cmdclass         = CMDCLASS,
           entry_points     = ENTRY_POINTS,
+          ext_modules=cythonize("wx/svg/_nanosvg.pyx")
         )
