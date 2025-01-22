@@ -12,3 +12,10 @@ dynamic = [
     "dependencies",
     "version"
  ]
+
+[build-system]
+requires = [
+    "setuptools>=61",
+    "cython == 3.0.10",
+    "sip == 6.9.1",
+]
