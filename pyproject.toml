@@ -20,3 +20,6 @@ requires = [
     "requests >= 2.26.0",
     "sip == 6.9.1",
 ]
+
+[tool.setuptools.packages.find]
+namespaces = false
