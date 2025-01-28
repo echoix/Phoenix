@@ -24,10 +24,5 @@ requires = [
 # Allows to have access to the folder on the search path when building, like before.
 build-backend = "setuptools.build_meta:__legacy__"
 
-[tool.setuptools]
-# Default for pyproject.toml projects is true, default was false with setup.py
-include-package-data = false
-
-
 [tool.setuptools.packages.find]
 namespaces = false
