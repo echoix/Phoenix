@@ -21,5 +21,10 @@ requires = [
     "sip == 6.9.1",
 ]
 
+[tool.setuptools]
+# Default for pyproject.toml projects is true, default was false with setup.py
+include-package-data = false
+
+
 [tool.setuptools.packages.find]
 namespaces = false
