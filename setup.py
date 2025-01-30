@@ -9,20 +9,33 @@
 # License:     wxWindows License
 #----------------------------------------------------------------------
 
+import optparse
 import sys, os
 import glob
 import stat
 
-from setuptools                     import setup, find_packages
-from distutils.command.build        import build as orig_build
+from contextlib import suppress
+from pathlib import Path
+from typing import Union
+
+from setuptools                     import Command, setup, find_packages
+from setuptools.command.build       import build as orig_build
+from setuptools.command.build_py    import build_py as orig_build_py
 from setuptools.command.install     import install as orig_install
 from setuptools.command.bdist_egg   import bdist_egg as orig_bdist_egg
 from setuptools.command.sdist       import sdist as orig_sdist
+from Cython.Build import cythonize
+
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+import build as wx_build_py_script
+
 try:
     from wheel.bdist_wheel import bdist_wheel as orig_bdist_wheel
     haveWheel = True
+    print("haveWheel = True, so using wx_bdist_wheel")
 except ImportError:
     haveWheel = False
+    print("haveWheel = False, so not using wx_bdist_wheel")
 
 from buildtools.config import Config, msg, opj, runcmd, canGetSOName, getSOName
 import buildtools.version as version
@@ -30,7 +43,7 @@ import buildtools.version as version
 
 # Create a buildtools.config.Configuration object
 cfg = Config(noWxConfig=True)
-DOCS_BASE='http://docs.wxPython.org'
+DOCS_BASE='https://docs.wxPython.org'
 
 #----------------------------------------------------------------------
 
@@ -38,13 +51,12 @@ NAME             = version.PROJECT_NAME
 DESCRIPTION      = "Cross platform GUI toolkit for Python, \"Phoenix\" version"
 AUTHOR           = "Robin Dunn"
 AUTHOR_EMAIL     = "robin@alldunn.com"
-URL              = "http://wxPython.org/"
+URL              = "https://wxPython.org/"
 PROJECT_URLS     = {
                     "Source": "https://github.com/wxWidgets/Phoenix",
                     "Documentation": "https://docs.wxpython.org/",
                    }
 DOWNLOAD_URL     = "https://pypi.org/project/{}".format(NAME)
-LICENSE          = "wxWindows Library License (https://opensource.org/licenses/wxwindows.php)"
 PLATFORMS        = "WIN32,WIN64,OSX,POSIX"
 KEYWORDS         = "GUI,wx,wxWindows,wxWidgets,cross-platform,user-interface,awesome"
 
@@ -72,33 +84,6 @@ The utility tools wxdocs and wxdemo will download the appropriate files with wxg
 the respective items. (Documents are launched in the default browser and demo is started
 with python).
 """.format(version=cfg.VERSION, docs_base=DOCS_BASE)
-
-
-CLASSIFIERS      = """\
-Development Status :: 6 - Mature
-Environment :: MacOS X :: Cocoa
-Environment :: Win32 (MS Windows)
-Environment :: X11 Applications :: GTK
-Intended Audience :: Developers
-License :: OSI Approved
-Operating System :: MacOS :: MacOS X
-Operating System :: Microsoft :: Windows :: Windows 7
-Operating System :: Microsoft :: Windows :: Windows 10
-Operating System :: POSIX
-Programming Language :: Python :: 3.7
-Programming Language :: Python :: 3.8
-Programming Language :: Python :: 3.9
-Programming Language :: Python :: 3.10
-Programming Language :: Python :: 3.11
-Programming Language :: Python :: 3.12
-Programming Language :: Python :: Implementation :: CPython
-Topic :: Software Development :: User Interfaces
-"""
-
-with open('requirements/install.txt') as fid:
-    INSTALL_REQUIRES = [line.strip()
-                        for line in fid.readlines()
-                        if not line.startswith('#')]
 
 isWindows = sys.platform.startswith('win')
 isDarwin = sys.platform == "darwin"
@@ -187,6 +172,7 @@ class wx_bdist_egg(orig_bdist_egg):
     def finalize_options(self):
         orig_bdist_egg.finalize_options(self)
 
+        # TODO: echoix
         # Redo the calculation of the egg's filename since we always have
         # extension modules, but they are not built by setuptools so it
         # doesn't know about them.
@@ -198,13 +184,16 @@ class wx_bdist_egg(orig_bdist_egg):
             self.plat_name
         ).egg_name()
         self.egg_output = os.path.join(self.dist_dir, basename+'.egg')
+        # TODO: echoix
 
 
     def run(self):
+        # TODO: echoix
         # Ensure that there is a basic library build for bdist_egg to pull from.
         self.run_command("build")
 
         _cleanup_symlinks(self)
+        # TODO: echoix
 
         # Run the default bdist_egg command
         orig_bdist_egg.run(self)
@@ -257,20 +246,303 @@ class wx_sdist(orig_sdist):
         # On the other hand, PyPI's upload size limit is waaaaaaaaay too
         # small so it probably doesn't matter too much...
         sdist_file = opj(self.dist_dir, self.distribution.get_fullname()+'.tar.gz')
-        self.distribution.dist_files.append(('sdist', '', sdist_file))
+        self.distribution.dist_files.append(("sdist", "", sdist_file))
 
 
+class CustomDoxCommand(Command):
+    description = "wxPython: " + wx_build_py_script.cmd_dox_description
+
+    def initialize_options(self) -> None:
+        pass
+
+    def finalize_options(self) -> None:
+        pass
+
+    def run(self) -> None:
+        wx_build_py_script.setPythonVersion(tuple())
+        wx_build_py_script.cmd_dox(None, None)
+
+
+class CustomEtgCommand(Command):
+    description = "wxPython: " + wx_build_py_script.cmd_etg_description
+
+    def initialize_options(self) -> None:
+        self.nodoc: Union[bool, None] = None
+
+    def finalize_options(self) -> None:
+        self.nodoc = True if self.nodoc is None else self.nodoc
+
+    def run(self) -> None:
+        options = optparse.Values({"nodoc": self.nodoc})
+        wx_build_py_script.setPythonVersion(tuple())
+        wx_build_py_script.cmd_etg(options, None)
+
+
+class CustomBuildWxCommand(Command):
+    description = "wxPython: " + wx_build_py_script.cmd_build_wx_description
+
+    def initialize_options(self) -> None:
+        self.use_syswx: Union[bool, None] = None
+        self.no_msedge: Union[bool, None] = None
+        self.jobs: Union[int, None] = None
+        self.cairo: Union[bool, None] = None
+        self.jom: Union[bool, None] = None
+        self.osx_carbon: Union[bool, None] = None
+        self.osx_cocoa: Union[bool, None] = None
+        self.destdir: Union[Path, str, None] = None
+        self.prefix: Union[str, None] = None
+        self.mac_framework: Union[bool, None] = None
+        self.gtk2: Union[bool, None] = None
+        self.gtk3: Union[bool, None] = None
+        self.build_dir: Union[Path, str, None] = None
+        self.mac_arch: Union[str, None] = None
+        self.no_config: Union[bool, None] = None
+        self.force_config: Union[bool, None] = None
+        self.debug: Union[bool, None] = None
+        self.extra_make: Union[str, None] = None
+        self.no_magic: Union[bool, None] = None
+        self.no_allmo: Union[bool, None] = None
+        self.both: Union[bool, None] = None
+
+    def finalize_options(self) -> None:
+        self.use_syswx = False if self.use_syswx is None else self.use_syswx
+        self.no_msedge = False if self.no_msedge is None else self.no_msedge
+        self.jobs = (
+            self.jobs
+            if self.jobs is not None
+            else self.get_finalized_command("build").parallel
+        )
+        self.cairo = False if self.cairo is None else self.cairo
+        self.jom = False if self.jom is None else self.jom
+        self.osx_carbon = False if self.osx_carbon is None else self.osx_carbon
+        self.osx_cocoa = True if self.osx_cocoa is None else self.osx_cocoa
+        with suppress(Exception):
+            self.destdir = Path(self.destdir)
+        self.prefix = self.prefix
+        self.mac_framework = False if self.mac_framework is None else self.mac_framework
+        self.gtk2 = False if self.gtk2 is None else self.gtk2
+        self.gtk3 = True if self.gtk3 is None else self.gtk3
+        with suppress(Exception):
+            self.build_dir = Path(self.build_dir)
+        with suppress(Exception):
+            self.mac_arch = self.mac_arch
+        self.no_config = False if self.no_config is None else self.no_config
+        self.force_config = False if self.force_config is None else self.force_config
+        self.debug = self.get_finalized_command("build").debug
+        self.extra_make = self.extra_make
+        self.no_magic = True if self.no_magic is None else self.no_magic
+        self.no_allmo = False if self.no_allmo is None else self.no_allmo
+        self.both = False if self.both is None else self.both
+
+    def run(self) -> None:
+        options = optparse.Values(
+            {
+                "use_syswx": self.use_syswx,
+                "no_msedge": self.no_msedge,
+                "jobs": self.jobs,
+                "cairo": self.cairo,
+                "jom": self.jom,
+                "osx_carbon": self.osx_carbon,
+                "osx_cocoa": self.osx_cocoa,
+                "destdir": self.destdir,
+                "prefix": self.prefix,
+                "mac_framework": self.mac_framework,
+                "gtk2": self.gtk2,
+                "gtk3": self.gtk3,
+                "build_dir": self.build_dir,
+                "mac_arch": self.mac_arch,
+                "no_config": self.no_config,
+                "force_config": self.force_config,
+                "debug": self.debug,
+                "extra_make": self.extra_make,
+                "no_magic": self.no_magic,
+                "no_allmo": self.no_allmo,
+                "both": self.both,
+            }
+        )
+        wx_build_py_script.setPythonVersion(tuple())
+        wx_build_py_script.cmd_build_wx(options, None)
+
+
+class CustomBuildPyCommand(Command):
+    description = "wxPython: " + wx_build_py_script.cmd_build_py_description
+
+    def initialize_options(self) -> None:
+        self.release: Union[bool, None] = None
+        self.use_syswx: Union[bool, None] = None
+        self.prefix: Union[str, None] = None
+        self.verbose: Union[bool, None] = None
+        self.debug: Union[bool, None] = None
+        self.both: Union[bool, None] = None
+        self.mac_arch: Union[str, None] = None
+        self.jobs: Union[int, None] = None
+        self.relwithdebug: Union[bool, None] = None
+        self.gtk2: Union[bool, None] = None
+        self.gtk3: Union[bool, None] = None
+        self.no_magic: Union[bool, None] = None
+        self.regenerate_sysconfig: Union[bool, None] = None
+        self.extra_waf: Union[str, None] = None
+        self.dump_waf_log: Union[bool, None] = None
+        self.cairo: Union[bool, None] = None
+        # self.no_msedge: Union[bool, None] = None
+        # self.jom: Union[bool, None] = None
+        # self.osx_carbon: Union[bool, None] = None
+        # self.osx_cocoa: Union[bool, None] = None
+        # self.destdir: Union[Path, str, None] = None
+        # self.mac_framework: Union[bool, None] = None
+        self.build_dir: Union[Path, str, None] = None
+        # self.no_config: Union[bool, None] = None
+        # self.force_config: Union[bool, None] = None
+        # self.extra_make: Union[str, None] = None
+        # self.no_allmo: Union[bool, None] = None
+
+    def finalize_options(self) -> None:
+        self.release = False if self.release is None else self.release
+        self.use_syswx = False if self.use_syswx is None else self.use_syswx
+        self.prefix = self.prefix
+        self.verbose = False if self.verbose is None else self.verbose
+        self.debug = self.get_finalized_command("build").debug
+        self.both = False if self.both is None else self.both
+        self.mac_arch = self.mac_arch
+        self.jobs = (
+            self.jobs
+            if self.jobs is not None
+            else self.get_finalized_command("build").parallel
+        )
+        self.relwithdebug = False if self.relwithdebug is None else self.relwithdebug
+        self.gtk2 = False if self.gtk2 is None else self.gtk2
+        self.gtk3 = True if self.gtk3 is None else self.gtk3
+        self.no_magic = True if self.no_magic is None else self.no_magic
+        self.regenerate_sysconfig = (
+            False if self.regenerate_sysconfig is None else self.regenerate_sysconfig
+        )
+        self.extra_waf = self.extra_waf
+        self.dump_waf_log = False if self.dump_waf_log is None else self.dump_waf_log
+        self.cairo = False if self.cairo is None else self.cairo
+        # self.no_msedge = False if self.no_msedge is None else self.no_msedge
+        # self.jom = False if self.jom is None else self.jom
+        # self.osx_carbon = False if self.osx_carbon is None else self.osx_carbon
+        # self.osx_cocoa = True if self.osx_cocoa is None else self.osx_cocoa
+        # with suppress(Exception):
+        #     self.destdir = Path(self.destdir)
+        # self.mac_framework = False if self.mac_framework is None else self.mac_framework
+        with suppress(Exception):
+            self.build_dir = Path(self.build_dir)
+        # self.no_config = False if self.no_config is None else self.no_config
+        # self.force_config = False if self.force_config is None else self.force_config
+        # self.extra_make = self.extra_make
+        # self.no_allmo = False if self.no_allmo is None else self.no_allmo
+
+    def run(self) -> None:
+        options = optparse.Values(
+            {
+                "release": self.release,
+                "use_syswx": self.use_syswx,
+                "prefix": self.prefix,
+                "verbose": self.verbose,
+                "debug": self.debug,
+                "both": self.both,
+                "mac_arch": self.mac_arch,
+                "jobs": self.jobs,
+                "relwithdebug": self.relwithdebug,
+                "gtk2": self.gtk2,
+                "gtk3": self.gtk3,
+                "no_magic": self.no_magic,
+                "regenerate_sysconfig": self.regenerate_sysconfig,
+                "extra_waf": self.extra_waf,
+                "dump_waf_log": self.dump_waf_log,
+                "cairo": self.cairo,
+                # "no_msedge": self.no_msedge,
+                # "jom": self.jom,
+                # "osx_carbon": self.osx_carbon,
+                # "osx_cocoa": self.osx_cocoa,
+                # "destdir": self.destdir,
+                # "mac_framework": self.mac_framework,
+                "build_dir": self.build_dir,
+                # "no_config": self.no_config,
+                # "force_config": self.force_config,
+                # "extra_make": self.extra_make,
+                # "no_allmo": self.no_allmo,
+            }
+        )
+        wx_build_py_script.setPythonVersion(tuple())
+        wx_build_py_script.cmd_build_py(options, None)
+
+
+class CustomSipCommand(Command):
+    description = "wxPython: " + wx_build_py_script.cmd_sip_description
+
+    def initialize_options(self) -> None:
+        self.keep_hash_lines: Union[None, bool] = None
+
+    def finalize_options(self) -> None:
+        self.keep_hash_lines = (
+            False if self.keep_hash_lines is None else self.keep_hash_lines
+        )
+
+    def run(self) -> None:
+        options = optparse.Values({"keep_hash_lines": self.keep_hash_lines})
+        wx_build_py_script.setPythonVersion(tuple())
+        wx_build_py_script.cmd_sip(options, None)
+
+
+# class CustomBuild(wx_build):
+#     sub_commands = [('sip', None)] + wx_build.sub_commands
+
+
+class CustomBuild(orig_build):
+    sub_commands = [
+        ("build_wx", None),
+        ("dox", None),
+        ("etg", None),
+        ("sip", None),
+        # ("wx_build_py", None),
+    ] + orig_build.sub_commands
+
+
+# class CustomSdist(wx_sdist):
+#     sub_commands = [('sip', None)] + wx_sdist.sub_commands
+
+
+class CustomSdist(orig_sdist):
+    sub_commands = [
+        ("build_wx", None),
+        ("dox", None),
+        ("etg", None),
+        ("sip", None),
+        ("wx_build_py", None),
+    ] + orig_sdist.sub_commands
+
+
+class CustomBuildPy(orig_build_py):
+    sub_commands = [
+        ("wx_build_py", None),
+    ] + orig_sdist.sub_commands
+
+
+# class CustomBdistWheel(orig_bdist_wheel):
+#     sub_commands = [
+#         ("dox", None),
+#         ("etg", None),
+#         ("sip", None),
+#     ] + orig_bdist_wheel.sub_commands
 
 
 # Map these new classes to the appropriate distutils command names.
 CMDCLASS = {
-    'build'       : wx_build,
-    'bdist_egg'   : wx_bdist_egg,
-    'install'     : wx_install,
-    'sdist'       : wx_sdist,
-    }
-if haveWheel:
-    CMDCLASS['bdist_wheel'] = wx_bdist_wheel
+    "build": CustomBuild,
+    # 'bdist_egg'   : wx_bdist_egg,
+    # 'install'     : wx_install,
+    "sdist": CustomSdist,
+    "dox": CustomDoxCommand,
+    "etg": CustomEtgCommand,
+    "sip": CustomSipCommand,
+    "build_wx": CustomBuildWxCommand,
+    "wx_build_py": CustomBuildPyCommand,
+    "build_py": CustomBuildPy,
+}
+# if haveWheel:
+#     CMDCLASS['bdist_wheel'] = wx_bdist_wheel
 
 
 
@@ -298,31 +570,31 @@ def wx_copy_file(src, dst, preserve_mode=1, preserve_times=1, update=0,
             os.symlink(linkdst, dst)
         return (dst, 1)
 
-import distutils.file_util
-orig_copy_file = distutils.file_util.copy_file
-distutils.file_util.copy_file = wx_copy_file
+
+# import distutils.file_util
+# orig_copy_file = distutils.file_util.copy_file
+# distutils.file_util.copy_file = wx_copy_file
 
 
+# def wx_copy_tree(src, dst, preserve_mode=1, preserve_times=1,
+#                  preserve_symlinks=0, update=0, verbose=1, dry_run=0):
+#     return orig_copy_tree(
+#         src, dst, preserve_mode, preserve_times, 1, update, verbose, dry_run)
 
-def wx_copy_tree(src, dst, preserve_mode=1, preserve_times=1,
-                 preserve_symlinks=0, update=0, verbose=1, dry_run=0):
-    return orig_copy_tree(
-        src, dst, preserve_mode, preserve_times, 1, update, verbose, dry_run)
-
-import distutils.dir_util
-orig_copy_tree = distutils.dir_util.copy_tree
-distutils.dir_util.copy_tree = wx_copy_tree
+# import distutils.dir_util
+# orig_copy_tree = distutils.dir_util.copy_tree
+# distutils.dir_util.copy_tree = wx_copy_tree
 
 
-# Monkey-patch make_writeable too. Sometimes the link is copied before the
-# target, and the original make_writable will fail on a link to a missing
-# target.
-def wx_make_writable(target):
-    if not os.path.islink(target):
-        os.chmod(target, os.stat(target).st_mode | stat.S_IWRITE)
+# # Monkey-patch make_writeable too. Sometimes the link is copied before the
+# # target, and the original make_writable will fail on a link to a missing
+# # target.
+# def wx_make_writable(target):
+#     if not os.path.islink(target):
+#         os.chmod(target, os.stat(target).st_mode | stat.S_IWRITE)
 
-import setuptools.command.build_py
-setuptools.command.build_py.make_writable = wx_make_writable
+# import setuptools.command.build_py
+# setuptools.command.build_py.make_writable = wx_make_writable
 
 
 #----------------------------------------------------------------------
@@ -359,9 +631,7 @@ BUILD_OPTIONS = { } #'build_base' : cfg.BUILD_BASE }
 
 #----------------------------------------------------------------------
 
-
-if __name__ == '__main__':
-    setup(name             = NAME,
+setup(name             = NAME,
           version          = cfg.VERSION,
           description      = DESCRIPTION,
           long_description = LONG_DESCRIPTION,
@@ -371,22 +641,16 @@ if __name__ == '__main__':
           url              = URL,
           project_urls     = PROJECT_URLS,
           download_url     = DOWNLOAD_URL,
-          license          = LICENSE,
           platforms        = PLATFORMS,
-          classifiers      = [c for c in CLASSIFIERS.split("\n") if c],
           keywords         = KEYWORDS,
-          install_requires = INSTALL_REQUIRES,
           zip_safe         = False,
           include_package_data = True,
-
           packages         = WX_PKGLIST,
           ext_package      = cfg.PKGDIR,
-
-          options          = { 'build'     : BUILD_OPTIONS },
-
           scripts          = SCRIPTS,
           data_files       = DATA_FILES,
           headers          = HEADERS,
           cmdclass         = CMDCLASS,
           entry_points     = ENTRY_POINTS,
+          ext_modules=cythonize("wx/svg/_nanosvg.pyx")
         )

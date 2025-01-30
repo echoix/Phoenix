@@ -112,6 +112,11 @@ MS_edge_version = '1.0.1185.39'
 MS_edge_url = 'https://www.nuget.org/api/v2/package/Microsoft.Web.WebView2/{}'.format(MS_edge_version)
 
 #---------------------------------------------------------------------------
+cmd_dox_description = "Run Doxygen to produce the XML file used by ETG scripts"
+cmd_sip_description = "Run sip to generate the C++ wrapper source"
+cmd_etg_description = "Run the ETG scripts that are out of date to update their SIP files and their Sphinx input files"
+cmd_build_wx_description = "Do only the wxWidgets part of the build"
+cmd_build_py_description = "Build wxPython only"
 
 def usage():
     print ("""\
@@ -476,7 +481,7 @@ def makeOptionParser():
     return parser
 
 
-def parseArgs(args):
+def parseArgs(args) -> tuple[optparse.Values, list[str]]:
     # If WXPYTHON_BUILD_ARGS is set in the environment, split it and add to args
     if os.environ.get('WXPYTHON_BUILD_ARGS', None):
         args += shlex.split(os.environ.get('WXPYTHON_BUILD_ARGS'))
@@ -507,6 +512,12 @@ def parseArgs(args):
         import buildtools.config
         buildtools.config.runSilently = True
 
+    print(("parseArgs options is ", options))
+    print(("parseArgs options type is ", type(options)))
+    print(("parseArgs options dir is ", dir(options)))
+    print(("parseArgs args is ", args))
+    print(("parseArgs args type is ", type(args)))
+    print(("parseArgs args dir is ", dir(args)))
     return options, args
 
 
@@ -1269,6 +1280,10 @@ def cmd_bdist_docs(options, args):
 
 
 def cmd_sip(options, args):
+    print("cmd_sip options is ", options)
+    print("cmd_sip options type is ", type(options))
+    # print("cmd_sip options vars is ", vars(options))
+    print("cmd_sip options dir is ", dir(options))
     cmdTimer = CommandTimer('sip')
     cfg = Config()
     pwd = pushDir(cfg.ROOT_DIR)
@@ -1861,10 +1876,10 @@ def cmd_build_others(options, args):
     # wxPython uses. So far, it's just the wx.svg package
     cmdTimer = CommandTimer('build_others')
 
-    cmd = [PYTHON, 'setup-wxsvg.py', 'build_ext', '--inplace']
-    if options.verbose:
-        cmd.append('--verbose')
-    runcmd(cmd)
+    # cmd = [PYTHON, 'setup-wxsvg.py', 'build_ext', '--inplace']
+    # if options.verbose:
+    #     cmd.append('--verbose')
+    # runcmd(cmd)
 
 
 def cmd_touch_others(options, args):
@@ -2009,10 +2024,10 @@ def cmd_bdist_msi(options, args):
 
 def cmd_egg_info(options, args, egg_base=None):
     cmdTimer = CommandTimer('egg_info')
-    VERBOSE = '--verbose' if options.verbose else ''
-    BASE = '--egg-base '+egg_base if egg_base is not None else ''
-    cmd = '"%s" setup.py egg_info %s %s' % (PYTHON, VERBOSE, BASE)
-    runcmd(cmd)
+    # VERBOSE = '--verbose' if options.verbose else ''
+    # BASE = '--egg-base '+egg_base if egg_base is not None else ''
+    # cmd = '"%s" setup.py egg_info %s %s' % (PYTHON, VERBOSE, BASE)
+    # runcmd(cmd)
 
 
 def cmd_clean_wx(options, args):
@@ -2054,6 +2069,8 @@ def cmd_clean_py(options, args):
         for wc in [ 'wx*' + wxversion2_nodot + msw.dll_type + '*.dll',
                     'wx*' + wxversion3_nodot + msw.dll_type + '*.dll']:
             files += glob.glob(opj(cfg.PKGDIR, wc))
+    keep_files = ["wx/gizmos.py"]
+    files = [file for file in files if file not in keep_files]
     delFiles(files)
 
     # Also remove any remaining DLLs just to make sure. This includes the C++
@@ -2196,7 +2213,7 @@ def cmd_sdist(options, args):
 
     generateVersionFiles(cfg)
     # copy .py files that need to go into the root wx package dir
-    for name in ['src/__init__.py', 'src/gizmos.py',]:
+    for name in ['src/__init__.py']:
         copyFile(name, cfg.PKGDIR, verbose=True)
 
     # copy Phoenix's generated code into the archive tree
@@ -2247,10 +2264,11 @@ def cmd_sdist(options, args):
         shutil.copytree('docs', opj(PDEST, 'docs'),
                         ignore=shutil.ignore_patterns('html', 'build', '__pycache__', 'cpp'))
 
-    # Add some extra stuff to the root folder
-    cmd_egg_info(options, args, egg_base=PDEST)
-    copyFile(opj(PDEST, '{}.egg-info/PKG-INFO'.format(baseName)),
-             opj(PDEST, 'PKG-INFO'))
+    # # Add some extra stuff to the root folder
+    # cmd_egg_info(options, args, egg_base=PDEST)
+    # copyFile(opj(PDEST, '{}.egg-info/PKG-INFO'.format(baseName)),
+    #          opj(PDEST, 'PKG-INFO'))
+    # # TODO: echoix: 
 
     # build the tarball
     msg('Archiving Phoenix source...')

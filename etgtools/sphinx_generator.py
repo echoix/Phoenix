@@ -628,6 +628,7 @@ class ParameterList(Node):
 
         for arg in arguments:
 
+            arg = arg.split(':')[0].strip()
             myarg = arg.split('=')[0].strip()
             if myarg:
                 theargs.append(myarg)

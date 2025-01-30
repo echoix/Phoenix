@@ -1,6 +1,6 @@
 # Python packages needed for building and testing wxPython Phoenix
 -r install.txt
-appdirs
+# appdirs
 setuptools
 sip == 6.9.1
 
@@ -8,23 +8,34 @@ wheel
 twine
 requests
 requests[security]
-cython==3.0.10
+cython==3.0.11
 pytest
 pytest-xdist
 pytest-forked
 pytest-timeout
 
-sphinx==2.2.0 ; python_version >= '3.0'
+# sphinx==2.2.0 ; python_version >= '3.0'
 sphinx==1.8.5 ; python_version < '3.0'
-alabaster<0.7.14
-sphinxcontrib-applehelp<1.0.8
-sphinxcontrib-devhelp<1.0.6
-sphinxcontrib-htmlhelp<2.0.5
-sphinxcontrib-jsmath<1.0.2
-sphinxcontrib-qthelp<1.0.7
-sphinxcontrib-serializinghtml<1.1.10
-Jinja2==2.10
-markupsafe==1.1.1
-doc2dash==2.3.0
+sphinx ; python_version >= '3.0'
+alabaster
+# alabaster<0.7.14
+# sphinxcontrib-applehelp<1.0.8
+# sphinxcontrib-devhelp<1.0.6
+# sphinxcontrib-htmlhelp<2.0.5
+# sphinxcontrib-jsmath<1.0.2
+# sphinxcontrib-qthelp<1.0.7
+# sphinxcontrib-serializinghtml<1.1.10
+# Jinja2==2.10
+# markupsafe==1.1.1
+# doc2dash==2.3.0
+sphinxcontrib-applehelp
+sphinxcontrib-devhelp
+sphinxcontrib-htmlhelp
+sphinxcontrib-jsmath
+sphinxcontrib-qthelp
+sphinxcontrib-serializinghtml
+Jinja2
+markupsafe
+doc2dash
 beautifulsoup4
 typing-extensions; python_version < '3.11'
