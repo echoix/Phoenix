@@ -434,6 +434,10 @@ def fixSizerClass(klass):
     removeVirtuals(klass)
     klass.find('CalcMin').isVirtual = True
     klass.find('RepositionChildren').isVirtual = True
+    try:
+        klass.find('InformFirstDirection').isVirtual = True
+    except extractors.ExtractorError:
+        pass
 
     # in the wxSizer class it is pure-virtual
     if klass.name == 'wxSizer':
@@ -1054,6 +1058,11 @@ public:
         sipRes = sipCpp->__next__();
         if (PyErr_Occurred())
             return NULL;
+    %End
+
+    PyObject* __iter__();
+    %MethodCode
+        return PyObject_SelfIter(sipSelf);
     %End
 }};
 
