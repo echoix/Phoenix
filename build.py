@@ -1297,8 +1297,8 @@ def cmd_sip(options, args):
             continue
 
         # Leave it turned off for now. TODO: Experiment with this...
-        # pyi_extract = posixjoin(cfg.PKGDIR, base[1:]) + '.pyi'
-        pyi_extract = None
+        pyi_extract = posixjoin(cfg.PKGDIR, base[1:]) + '.pyi'
+        # pyi_extract = None
 
         # SIP extracts are used to pull python snippets and put them into the
         # module's .py file
@@ -1320,7 +1320,7 @@ def cmd_sip(options, args):
             tracing = {tracing}
             protected-is-public = false
             generate-extracts = [\'{extracts}\']
-            pep484-pyi = false
+            pep484-pyi = true
 
             [tool.sip.project]
             abi-version = "{abi_version}"
