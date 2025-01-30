@@ -10,8 +10,8 @@ dynamic = [
     "readme",
     "scripts",
     "urls",
-    "version"
- ]
+    "version",
+]
 
 [build-system]
 requires = [
