@@ -1858,14 +1858,9 @@ def cmd_build_docker(options, args):
 def cmd_build_others(options, args):
     # Build other stuff that may have their own separate build commands instead
     # of the (ab)normal etg/tweak/generate/sip/compile sequence that the rest of
-    # wxPython uses. So far, it's just the wx.svg package
+    # wxPython uses. Now it is unused.
     cmdTimer = CommandTimer('build_others')
-
-    cmd = [PYTHON, 'setup-wxsvg.py', 'build_ext', '--inplace']
-    if options.verbose:
-        cmd.append('--verbose')
-    runcmd(cmd)
-
+    
 
 def cmd_touch_others(options, args):
     cmdTimer = CommandTimer('touch_others')
