@@ -22,7 +22,8 @@ exclude             wx/svg/*.c
 exclude             wx/svg/*.pyx 
 exclude             wx/svg/*.pxd
 
-prune               buildtools
-prune               etgtools
-prune               sphinxtools
-prune               unittests
+exclude             buildtools
+exclude             etgtools
+exclude             sphinxtools
+exclude             src
+exclude             unittests
