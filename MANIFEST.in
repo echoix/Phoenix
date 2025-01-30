@@ -21,10 +21,3 @@ recursive-exclude   wx  __pycache__
 exclude             wx/svg/*.c 
 exclude             wx/svg/*.pyx 
 exclude             wx/svg/*.pxd
-
-exclude             buildtools
-recursive-exclude   buildtools **
-exclude             etgtools
-exclude             sphinxtools
-exclude             src
-exclude             unittests
