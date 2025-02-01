@@ -18,4 +18,4 @@ recursive-exclude   wx  .git
 recursive-exclude   wx  *.pyc
 recursive-exclude   wx  __pycache__
 
-exclude             wx/svg/*.c 
+#exclude             wx/svg/*.c 
