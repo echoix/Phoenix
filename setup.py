@@ -366,7 +366,7 @@ if have_cython:
 else:
     SOURCE = os.path.join(PACKAGEDIR, '_nanosvg.c')
 
-module = Extension(name='_nanosvg',
+module = Extension(name='wx.svg._nanosvg',
                    sources=[SOURCE],
                 #    sources=[SOURCE,os.path.join(PACKAGEDIR, '_nanosvg.pxd')],
                    include_dirs=['ext/nanosvg/src']
