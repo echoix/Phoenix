@@ -385,7 +385,7 @@ BUILD_OPTIONS = { } #'build_base' : cfg.BUILD_BASE }
 #     modules = [module]
 
 extensions = [
-    Extension("*", ["*.pyx"],
+    Extension("*", ["wx/svg/*.pyx"],
         include_dirs=["ext/nanosvg/src"]),
 ]
 
