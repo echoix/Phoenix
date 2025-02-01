@@ -41,7 +41,7 @@ for manipulating the SVG shape info in memory.
 """
 
 import sys
-cimport _nanosvg
+
 from cpython.buffer cimport (
     Py_buffer, PyObject_CheckBuffer, PyObject_GetBuffer, PyBUF_SIMPLE,
     PyBuffer_Release)
@@ -52,7 +52,7 @@ PY2 = sys.version_info[0] == 2
 # Replicate the C enums and values for Python, dropping the leading 'N'
 
 cpdef enum SVGpaintType:
-    SVG_PAINT_NONE = _nanosvg.NSVG_PAINT_NONE
+    SVG_PAINT_NONE = NSVG_PAINT_NONE
     SVG_PAINT_COLOR = NSVG_PAINT_COLOR
     SVG_PAINT_LINEAR_GRADIENT = NSVG_PAINT_LINEAR_GRADIENT
     SVG_PAINT_RADIAL_GRADIENT = NSVG_PAINT_RADIAL_GRADIENT
