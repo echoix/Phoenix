@@ -367,7 +367,8 @@ else:
     SOURCE = os.path.join(PACKAGEDIR, '_nanosvg.c')
 
 module = Extension(name='_nanosvg',
-                   sources=[SOURCE,os.path.join(PACKAGEDIR, '_nanosvg.pxd')],
+                   sources=[SOURCE],
+                #    sources=[SOURCE,os.path.join(PACKAGEDIR, '_nanosvg.pxd')],
                    include_dirs=['ext/nanosvg/src']
                 #    define_macros=[('NANOSVG_IMPLEMENTATION', '1'),
                 #                   ('NANOSVGRAST_IMPLEMENTATION', '1'),
