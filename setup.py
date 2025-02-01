@@ -367,15 +367,16 @@ else:
     SOURCE = os.path.join(PACKAGEDIR, '_nanosvg.c')
 
 module = Extension(name='_nanosvg',
-                   sources=[SOURCE],
-                   include_dirs=['ext/nanosvg/src'],
-                   define_macros=[('NANOSVG_IMPLEMENTATION', '1'),
-                                  ('NANOSVGRAST_IMPLEMENTATION', '1'),
-                                  ('NANOSVG_ALL_COLOR_KEYWORDS', '1'),
-                                  ])
+                   sources=[SOURCE,os.path.join(PACKAGEDIR, '_nanosvg.pxd')],
+                   include_dirs=['ext/nanosvg/src']
+                #    define_macros=[('NANOSVG_IMPLEMENTATION', '1'),
+                #                   ('NANOSVGRAST_IMPLEMENTATION', '1'),
+                #                   ('NANOSVG_ALL_COLOR_KEYWORDS', '1'),
+                #                   ]
+                                  )
 
 if have_cython:
-    modules = cythonize([module],
+    modules = cythonize([module], force=True,
                         compiler_directives={'embedsignature': True,
                                              'language_level':2,
                                             })
