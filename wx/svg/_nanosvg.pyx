@@ -47,7 +47,7 @@ from cpython.buffer cimport (
     PyBuffer_Release)
 
 PY2 = sys.version_info[0] == 2
-
+from . cimport NSVGpaintType
 #----------------------------------------------------------------------------
 # Replicate the C enums and values for Python, dropping the leading 'N'
 
