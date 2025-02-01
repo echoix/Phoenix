@@ -24,6 +24,10 @@ requires = [
 # Allows to have access to the folder on the search path when building, like before.
 build-backend = "setuptools.build_meta:__legacy__"
 
+[tool.setuptools.package-dir]
+wx = "wx"
+"wx.svg" = "wx/svg"
+
 [tool.setuptools.packages.find]
 exclude = ["src", "buildtools*", "etgtools", "sphinxtools", "src", "unittests"]
 namespaces = false
