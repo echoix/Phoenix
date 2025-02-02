@@ -13,20 +13,23 @@ import sys, os
 import glob
 import stat
 
-from setuptools                     import setup, find_packages
+from setuptools                     import setup, find_packages, Extension
 from distutils.command.build        import build as orig_build
 from setuptools.command.install     import install as orig_install
 from setuptools.command.bdist_egg   import bdist_egg as orig_bdist_egg
 from setuptools.command.sdist       import sdist as orig_sdist
-try:
-    from wheel.bdist_wheel import bdist_wheel as orig_bdist_wheel
-    haveWheel = True
-except ImportError:
-    haveWheel = False
+from setuptools.command.bdist_wheel import bdist_wheel as orig_bdist_wheel
 
 from buildtools.config import Config, msg, opj, runcmd, canGetSOName, getSOName
 import buildtools.version as version
 
+try:
+    from Cython.Build import cythonize
+    have_cython = True
+except ImportError:
+    have_cython = False
+ 
+haveWheel = True
 
 # Create a buildtools.config.Configuration object
 cfg = Config(noWxConfig=True)
@@ -329,6 +332,9 @@ setuptools.command.build_py.make_writable = wx_make_writable
 
 WX_PKGLIST = [cfg.PKGDIR] + [cfg.PKGDIR + '.' + pkg for pkg in find_packages('wx')]
 
+print("WX_PKGLIST is: ")
+print(WX_PKGLIST)
+
 ENTRY_POINTS = {
     'console_scripts' : [
         "img2png = wx.tools.img2png:main",
@@ -356,6 +362,43 @@ BUILD_OPTIONS = { } #'build_base' : cfg.BUILD_BASE }
 #if cfg.WXPORT == 'msw':
 #    BUILD_OPTIONS[ 'compiler' ] = cfg.COMPILER
 
+
+# PACKAGEDIR = 'wx/svg'
+# if have_cython:
+#     SOURCE = os.path.join(PACKAGEDIR, '_nanosvg.pyx')
+# else:
+#     SOURCE = os.path.join(PACKAGEDIR, '_nanosvg.c')
+
+# module = Extension(name='wx.svg._nanosvg',
+#                    sources=[SOURCE],
+#                 #    sources=[SOURCE,os.path.join(PACKAGEDIR, '_nanosvg.pxd')],
+#                    include_dirs=['ext/nanosvg/src']
+#                    define_macros=[('NANOSVG_IMPLEMENTATION', '1'),
+#                                   ('NANOSVGRAST_IMPLEMENTATION', '1'),
+#                                   ('NANOSVG_ALL_COLOR_KEYWORDS', '1'),
+#                                   ]
+#                                   )
+
+# if have_cython:
+#     modules = cythonize([module], force=True,
+#                         compiler_directives={'embedsignature': True,
+#                                              'language_level':2,
+#                                             })
+# else:
+#     modules = [module]
+
+extensions = [
+    Extension(
+        "*",
+        ["wx/svg/*.pyx"],
+        include_dirs=["ext/nanosvg/src"],
+        define_macros=[
+            ("NANOSVG_IMPLEMENTATION", "1"),
+            ("NANOSVGRAST_IMPLEMENTATION", "1"),
+            ("NANOSVG_ALL_COLOR_KEYWORDS", "1"),
+        ],
+    )
+]
 
 #----------------------------------------------------------------------
 
@@ -389,4 +432,10 @@ if __name__ == '__main__':
           headers          = HEADERS,
           cmdclass         = CMDCLASS,
           entry_points     = ENTRY_POINTS,
+        #   ext_modules      = modules,
+          ext_modules      = cythonize(extensions,
+                                compiler_directives={
+                                    "embedsignature": True,
+                                    "language_level": 2,
+                                }),
         )

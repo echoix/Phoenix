@@ -1188,7 +1188,8 @@ def cmd_wxlib(options, args):
     cmdTimer = CommandTimer('wxlib')
     pwd = pushDir(phoenixDir())
 
-    for wx_pkg in ['lib', 'py', 'svg', 'tools']:
+    # for wx_pkg in ['lib', 'py', 'svg', 'tools']:
+    for wx_pkg in ['lib', 'py', 'tools']:
         libDir = os.path.join(phoenixDir(), 'wx', wx_pkg)
 
         if not os.path.isdir(libDir):
@@ -1858,14 +1859,9 @@ def cmd_build_docker(options, args):
 def cmd_build_others(options, args):
     # Build other stuff that may have their own separate build commands instead
     # of the (ab)normal etg/tweak/generate/sip/compile sequence that the rest of
-    # wxPython uses. So far, it's just the wx.svg package
+    # wxPython uses. Now it is unused.
     cmdTimer = CommandTimer('build_others')
-
-    cmd = [PYTHON, 'setup-wxsvg.py', 'build_ext', '--inplace']
-    if options.verbose:
-        cmd.append('--verbose')
-    runcmd(cmd)
-
+    
 
 def cmd_touch_others(options, args):
     cmdTimer = CommandTimer('touch_others')
@@ -2368,6 +2364,7 @@ def cmd_bdist(options, args):
             msg("Archiving wxWidgets shared libraries...")
             dlls = sorted(glob.glob(os.path.join(wxlibdir, "*%s" % dllext)))
             for dll in dlls:
+                print(f"ed: cmd_bdist dll: {dll}")
                 tarball.add(dll, os.path.join(rootname, 'wx', os.path.basename(dll)))
 
         tarball.add('packaging/README-bdist.txt', os.path.join(rootname, 'README.txt'))
