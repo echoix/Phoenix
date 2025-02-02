@@ -47,7 +47,7 @@ from cpython.buffer cimport (
     PyBuffer_Release)
 
 PY2 = sys.version_info[0] == 2
-from wx.svg._nanosvg cimport NSVGpaintType
+from wx.svg._nanosvg cimport *
 #----------------------------------------------------------------------------
 # Replicate the C enums and values for Python, dropping the leading 'N'
 
@@ -58,26 +58,26 @@ cpdef enum SVGpaintType:
     SVG_PAINT_RADIAL_GRADIENT = NSVGpaintType.NSVG_PAINT_RADIAL_GRADIENT
 
 cpdef enum SVGspreadType:
-    SVG_SPREAD_PAD = NSVG_SPREAD_PAD
-    SVG_SPREAD_REFLECT = NSVG_SPREAD_REFLECT
-    SVG_SPREAD_REPEAT = NSVG_SPREAD_REPEAT
+    SVG_SPREAD_PAD = NSVGspreadType.NSVG_SPREAD_PAD
+    SVG_SPREAD_REFLECT = NSVGspreadType.NSVG_SPREAD_REFLECT
+    SVG_SPREAD_REPEAT = NSVGspreadType.NSVG_SPREAD_REPEAT
 
 cpdef enum SVGlineJoin:
-    SVG_JOIN_MITER = NSVG_JOIN_MITER
-    SVG_JOIN_ROUND = NSVG_JOIN_ROUND
-    SVG_JOIN_BEVEL = NSVG_JOIN_BEVEL
+    SVG_JOIN_MITER = NSVGlineJoin.NSVG_JOIN_MITER
+    SVG_JOIN_ROUND = NSVGlineJoin.NSVG_JOIN_ROUND
+    SVG_JOIN_BEVEL = NSVGlineJoin.NSVG_JOIN_BEVEL
 
 cpdef enum SVGlineCap:
-    SVG_CAP_BUTT = NSVG_CAP_BUTT
-    SVG_CAP_ROUND = NSVG_CAP_ROUND
-    SVG_CAP_SQUARE = NSVG_CAP_SQUARE
+    SVG_CAP_BUTT = NSVGlineCap.NSVG_CAP_BUTT
+    SVG_CAP_ROUND = NSVGlineCap.NSVG_CAP_ROUND
+    SVG_CAP_SQUARE = NSVGlineCap.NSVG_CAP_SQUARE
 
 cpdef enum SVGfillRule:
-    SVG_FILLRULE_NONZERO = NSVG_FILLRULE_NONZERO
-    SVG_FILLRULE_EVENODD = NSVG_FILLRULE_EVENODD
+    SVG_FILLRULE_NONZERO = NSVGfillRule.NSVG_FILLRULE_NONZERO
+    SVG_FILLRULE_EVENODD = NSVGfillRule.NSVG_FILLRULE_EVENODD
 
 cpdef enum SVGflags:
-    SVG_FLAGS_VISIBLE = NSVG_FLAGS_VISIBLE
+    SVG_FLAGS_VISIBLE = NSVGflags.NSVG_FLAGS_VISIBLE
 
 
 #----------------------------------------------------------------------------
