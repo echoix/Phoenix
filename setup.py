@@ -332,6 +332,9 @@ setuptools.command.build_py.make_writable = wx_make_writable
 
 WX_PKGLIST = [cfg.PKGDIR] + [cfg.PKGDIR + '.' + pkg for pkg in find_packages('wx')]
 
+print("WX_PKGLIST is: ")
+print(WX_PKGLIST)
+
 ENTRY_POINTS = {
     'console_scripts' : [
         "img2png = wx.tools.img2png:main",
