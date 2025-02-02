@@ -430,5 +430,9 @@ if __name__ == '__main__':
           cmdclass         = CMDCLASS,
           entry_points     = ENTRY_POINTS,
         #   ext_modules      = modules,
-          ext_modules      = cythonize(extensions),
+          ext_modules      = cythonize(extensions,
+                                compiler_directives={
+                                    "embedsignature": True,
+                                    "language_level": 2,
+                                }),
         )
