@@ -205,6 +205,9 @@ jobs:
         with:
           create-symlink: true
           key: ${{ github.job }}-${{ matrix.os }}-${{ matrix.architecture }}-${{ matrix.python-version }}
+      - name: Set ccache config
+        if: ${{ runner.os == 'Linux'}}
+        run: ccache --set-config base_dir=/tmp/pip-req-build*/
       - name: Build the wxPython wheel
         env:
           WXPYTHON_BUILD_ARGS: ${{ steps.init.outputs.build_opts }}
