@@ -2364,6 +2364,7 @@ def cmd_bdist(options, args):
             msg("Archiving wxWidgets shared libraries...")
             dlls = sorted(glob.glob(os.path.join(wxlibdir, "*%s" % dllext)))
             for dll in dlls:
+                print(f"ed: cmd_bdist dll: {dll}")
                 tarball.add(dll, os.path.join(rootname, 'wx', os.path.basename(dll)))
 
         tarball.add('packaging/README-bdist.txt', os.path.join(rootname, 'README.txt'))
