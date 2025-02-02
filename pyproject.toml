@@ -1,0 +1,127 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm", "sip"]
+build-backend = "setuptools.build_meta"
+backend-path = [ "."]
+
+
+[project]
+requires-python = ">= 3.9"
+name = "wxPython"
+dynamic = ["version"]
+description = "Cross platform GUI toolkit for Python, \"Phoenix\" version"
+readme = "README.rst"
+license = { text = "wxWindows Library License (https://opensource.org/licenses/wxwindows.php)" }
+authors = [{ name = "Robin Dunn", email = "robin@alldunn.com" }]
+keywords = ["GUI", "awesome", "cross-platform", "user-interface", "wx", "wxWidgets", "wxWindows"]
+classifiers = [
+    "Development Status :: 6 - Mature",
+    "Environment :: MacOS X :: Cocoa",
+    "Environment :: Win32 (MS Windows)",
+    "Environment :: X11 Applications :: GTK",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows :: Windows 10",
+    "Operating System :: Microsoft :: Windows :: Windows 7",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: User Interfaces",
+]
+dependencies = [
+    "numpy ; python_version >= '3.0' and python_version < '3.12'",
+    "numpy < 1.17 ; python_version <= '2.7'",
+    "six",
+]
+
+[project.scripts]
+helpviewer = "wx.tools.helpviewer:main"
+img2png = "wx.tools.img2png:main"
+img2py = "wx.tools.img2py:main"
+img2xpm = "wx.tools.img2xpm:main"
+pycrust = "wx.py.PyCrust:main"
+pyshell = "wx.py.PyShell:main"
+pyslices = "wx.py.PySlices:main"
+pyslicesshell = "wx.py.PySlicesShell:main"
+pywxrc = "wx.tools.pywxrc:main"
+wxdemo = "wx.tools.wxget_docs_demo:demo_main" # Get/Launch Demo
+wxdocs = "wx.tools.wxget_docs_demo:docs_main" # Get/Launch Docs
+wxget = "wx.tools.wxget:main"                 # New wx wget
+
+[project.urls]
+Documentation = "https://docs.wxpython.org/"
+Download = "https://pypi.org/project/wxPython"
+Homepage = "http://wxPython.org/"
+Source = "https://github.com/wxWidgets/Phoenix"
+
+# [tool.hatch.version]
+# path = "wx/__init__.py"
+
+# [tool.hatch.build.targets.sdist]
+# include = ["/wx"]
+
+
+[tool.setuptools]
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools.packages]
+find = {}
+
+[dependency-groups]
+dev = [
+    "alabaster",
+    "appdirs",
+    "attrdict3>=2.0.2 ; sys_platform == 'win32'",
+    "beautifulsoup4>=4.12.3",
+    "cython>=3.0.10",
+    "doc2dash>=2.3.0",
+    "jinja2>=2.10",
+    "markupsafe>=1.1.1",
+    "numpy<1.17 ; python_full_version < '2.8'",
+    "numpy>=1.24.4 ; python_full_version >= '3.0' and python_full_version < '3.12'",
+    "pytest>=8.3.4",
+    "pytest-forked>=1.6.0",
+    "pytest-timeout>=2.3.1",
+    "pytest-xdist>=3.6.1",
+    "requests[security]>=2.32.3",
+    "setuptools>=75.6.0",
+    "sip==6.9.1",
+    "six>=1.17.0",
+    # "sphinx>=2.2.0",
+    "sphinx==1.8.5 ; python_full_version < '3.0'",
+    "sphinx>5.1.1 ; python_full_version >= '3.8' and python_full_version < '3.10'",
+    "sphinx>=8.0.0 ; python_full_version >= '3.10'",
+    # "sphinx>=2.2.0 ; python_full_version >= '3.0'",
+    "sphinxcontrib-applehelp>=2.0.0",
+    "sphinxcontrib-devhelp>=2.0.0",
+    "sphinxcontrib-htmlhelp>=2.1.0",
+    "sphinxcontrib-jsmath>=1.0.1",
+    "sphinxcontrib-qthelp>=2.0.0",
+    "sphinxcontrib-serializinghtml>=2.0.0",
+    # "sphinx>=2.2.0 ; python_full_version >= '3.0'",
+    # "sphinxcontrib-applehelp<1.0.8",
+    # "sphinxcontrib-devhelp<1.0.6",
+    # "sphinxcontrib-htmlhelp<2.0.5",
+    # "sphinxcontrib-jsmath<1.0.2",
+    # "sphinxcontrib-qthelp<1.0.7",
+    # "sphinxcontrib-serializinghtml<1.1.10",
+    "twine>=6.0.1",
+    "wheel>=0.45.1",
+    # "buildtools @ {root:uri}/buildtools",
+]
+
+
+[tool.sip.project]
+# abi-version = "{abi_version}"
+sip-files-dir = "sip/gen"
+# sip-include-dirs = ['{src_dir}']
+sip-module = "wx.siplib"
+
+[tool.sip.bindings.wx]
+pep484-pyi = true

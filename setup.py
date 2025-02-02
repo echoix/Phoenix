@@ -24,6 +24,7 @@ try:
 except ImportError:
     haveWheel = False
 
+# sys.path.insert(0, os.path.abspath(os.path.split(__file__)[0]+'/'))
 from buildtools.config import Config, msg, opj, runcmd, canGetSOName, getSOName
 import buildtools.version as version
 
@@ -36,17 +37,17 @@ DOCS_BASE='http://docs.wxPython.org'
 
 NAME             = version.PROJECT_NAME
 DESCRIPTION      = "Cross platform GUI toolkit for Python, \"Phoenix\" version"
-AUTHOR           = "Robin Dunn"
-AUTHOR_EMAIL     = "robin@alldunn.com"
-URL              = "http://wxPython.org/"
-PROJECT_URLS     = {
-                    "Source": "https://github.com/wxWidgets/Phoenix",
-                    "Documentation": "https://docs.wxpython.org/",
-                   }
-DOWNLOAD_URL     = "https://pypi.org/project/{}".format(NAME)
+# AUTHOR           = "Robin Dunn"
+# AUTHOR_EMAIL     = "robin@alldunn.com"
+# URL              = "http://wxPython.org/"
+# PROJECT_URLS     = {
+#                     "Source": "https://github.com/wxWidgets/Phoenix",
+#                     "Documentation": "https://docs.wxpython.org/",
+#                    }
+# DOWNLOAD_URL     = "https://pypi.org/project/{}".format(NAME)
 LICENSE          = "wxWindows Library License (https://opensource.org/licenses/wxwindows.php)"
 PLATFORMS        = "WIN32,WIN64,OSX,POSIX"
-KEYWORDS         = "GUI,wx,wxWindows,wxWidgets,cross-platform,user-interface,awesome"
+# KEYWORDS         = "GUI,wx,wxWindows,wxWidgets,cross-platform,user-interface,awesome"
 
 LONG_DESCRIPTION = """\
 Welcome to wxPython's Project Phoenix! Phoenix is the improved next-generation
@@ -95,10 +96,10 @@ Programming Language :: Python :: Implementation :: CPython
 Topic :: Software Development :: User Interfaces
 """
 
-with open('requirements/install.txt') as fid:
-    INSTALL_REQUIRES = [line.strip()
-                        for line in fid.readlines()
-                        if not line.startswith('#')]
+# with open('requirements/install.txt') as fid:
+#     INSTALL_REQUIRES = [line.strip()
+#                         for line in fid.readlines()
+#                         if not line.startswith('#')]
 
 isWindows = sys.platform.startswith('win')
 isDarwin = sys.platform == "darwin"
@@ -329,24 +330,24 @@ setuptools.command.build_py.make_writable = wx_make_writable
 
 WX_PKGLIST = [cfg.PKGDIR] + [cfg.PKGDIR + '.' + pkg for pkg in find_packages('wx')]
 
-ENTRY_POINTS = {
-    'console_scripts' : [
-        "img2png = wx.tools.img2png:main",
-        "img2py = wx.tools.img2py:main",
-        "img2xpm = wx.tools.img2xpm:main",
-        "pywxrc = wx.tools.pywxrc:main",
-#        ],
-#    'gui_scripts' : [  # TODO: Why was this commented out?
-        "wxget = wx.tools.wxget:main",  # New wx wget
-        "wxdocs = wx.tools.wxget_docs_demo:docs_main",  # Get/Launch Docs
-        "wxdemo = wx.tools.wxget_docs_demo:demo_main",  # Get/Launch Demo
-        "helpviewer = wx.tools.helpviewer:main",
-        "pycrust = wx.py.PyCrust:main",
-        "pyshell = wx.py.PyShell:main",
-        "pyslices = wx.py.PySlices:main",
-        "pyslicesshell = wx.py.PySlicesShell:main",
-        ],
-    }
+# ENTRY_POINTS = {
+#     'console_scripts' : [
+#         "img2png = wx.tools.img2png:main",
+#         "img2py = wx.tools.img2py:main",
+#         "img2xpm = wx.tools.img2xpm:main",
+#         "pywxrc = wx.tools.pywxrc:main",
+# #        ],
+# #    'gui_scripts' : [  # TODO: Why was this commented out?
+#         "wxget = wx.tools.wxget:main",  # New wx wget
+#         "wxdocs = wx.tools.wxget_docs_demo:docs_main",  # Get/Launch Docs
+#         "wxdemo = wx.tools.wxget_docs_demo:demo_main",  # Get/Launch Demo
+#         "helpviewer = wx.tools.helpviewer:main",
+#         "pycrust = wx.py.PyCrust:main",
+#         "pyshell = wx.py.PyShell:main",
+#         "pyslices = wx.py.PySlices:main",
+#         "pyslicesshell = wx.py.PySlicesShell:main",
+#         ],
+#     }
 
 SCRIPTS = []
 DATA_FILES = []
@@ -361,32 +362,33 @@ BUILD_OPTIONS = { } #'build_base' : cfg.BUILD_BASE }
 
 
 if __name__ == '__main__':
-    setup(name             = NAME,
+    setup(
+        #   name             = NAME,
           version          = cfg.VERSION,
           description      = DESCRIPTION,
           long_description = LONG_DESCRIPTION,
           long_description_content_type = 'text/x-rst',
-          author           = AUTHOR,
-          author_email     = AUTHOR_EMAIL,
-          url              = URL,
-          project_urls     = PROJECT_URLS,
-          download_url     = DOWNLOAD_URL,
-          license          = LICENSE,
+        #   author           = AUTHOR,
+        #   author_email     = AUTHOR_EMAIL,
+        #   url              = URL,
+        #   project_urls     = PROJECT_URLS,
+        #   download_url     = DOWNLOAD_URL,
+        #   license          = LICENSE,
           platforms        = PLATFORMS,
-          classifiers      = [c for c in CLASSIFIERS.split("\n") if c],
-          keywords         = KEYWORDS,
-          install_requires = INSTALL_REQUIRES,
-          zip_safe         = False,
-          include_package_data = True,
+        #   classifiers      = [c for c in CLASSIFIERS.split("\n") if c],
+        #   keywords         = KEYWORDS,
+        #   install_requires = INSTALL_REQUIRES,
+        #   zip_safe         = False,
+        #   include_package_data = True,
 
           packages         = WX_PKGLIST,
           ext_package      = cfg.PKGDIR,
 
           options          = { 'build'     : BUILD_OPTIONS },
 
-          scripts          = SCRIPTS,
+        #   scripts          = SCRIPTS,
           data_files       = DATA_FILES,
           headers          = HEADERS,
           cmdclass         = CMDCLASS,
-          entry_points     = ENTRY_POINTS,
+        #   entry_points     = ENTRY_POINTS,
         )
