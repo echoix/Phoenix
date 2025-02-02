@@ -1188,7 +1188,8 @@ def cmd_wxlib(options, args):
     cmdTimer = CommandTimer('wxlib')
     pwd = pushDir(phoenixDir())
 
-    for wx_pkg in ['lib', 'py', 'svg', 'tools']:
+    # for wx_pkg in ['lib', 'py', 'svg', 'tools']:
+    for wx_pkg in ['lib', 'py', 'tools']:
         libDir = os.path.join(phoenixDir(), 'wx', wx_pkg)
 
         if not os.path.isdir(libDir):
