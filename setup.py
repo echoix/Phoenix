@@ -357,8 +357,8 @@ BUILD_OPTIONS = { } #'build_base' : cfg.BUILD_BASE }
 #----------------------------------------------------------------------
 
 
-if __name__ == '__main__':
-    setup(name             = NAME,
+# if __name__ == '__main__':
+setup(name             = NAME,
           version          = cfg.VERSION,
           description      = DESCRIPTION,
           long_description = LONG_DESCRIPTION,
@@ -386,4 +386,5 @@ if __name__ == '__main__':
           headers          = HEADERS,
           cmdclass         = CMDCLASS,
           entry_points     = ENTRY_POINTS,
+          setup_requires   = ["requests"],
         )
