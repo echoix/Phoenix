@@ -26,4 +26,4 @@ Jinja2==2.10
 markupsafe==1.1.1
 doc2dash==2.3.0
 beautifulsoup4
-typing-extensions; python_version < '3.11'
+typing-extensions>=4.0.0 ; python_version < '3.11'

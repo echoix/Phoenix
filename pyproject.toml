@@ -41,7 +41,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy >= 1.11.1",
-    "typing-extensions >=3.6.2 ; python_full_version < '3.11'",
+    "typing-extensions>=4.0.0; python_full_version < '3.11'",
 ]
 dynamic = [
     "license",
