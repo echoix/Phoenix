@@ -25,9 +25,6 @@ from .constants import HTML_REPLACE, TODAY, SPHINXROOT, SECTIONS_EXCLUDE
 from .constants import CONSTANT_INSTANCES, WIDGETS_IMAGES_ROOT, SPHINX_IMAGES_ROOT
 from .constants import DOCSTRING_KEY
 
-PY2 = sys.version_info[0] == 2
-PY3 = sys.version_info[0] == 3
-
 # ----------------------------------------------------------------------- #
 
 
@@ -76,7 +73,7 @@ def genIndexes(sphinxDir):
     files.
     """
     print("Generating indexes...")
-    pklfiles = glob.glob(sphinxDir + '/*.pkl')
+    pklfiles = sorted(glob.glob(sphinxDir + '/*.pkl'))
 
     for file in pklfiles:
         if file.endswith('functions.pkl'):
@@ -109,8 +106,8 @@ def buildEnumsAndMethods(sphinxDir):
 
     unreferenced_classes = {}
 
-    textfiles = glob.glob(sphinxDir + '/*.txt')
-    enum_files = glob.glob(sphinxDir + '/*.enumeration.txt')
+    textfiles = sorted(glob.glob(sphinxDir + '/*.txt'))
+    enum_files = sorted(glob.glob(sphinxDir + '/*.enumeration.txt'))
 
     enum_base = [os.path.split(os.path.splitext(enum)[0])[1] for enum in enum_files]
     enum_base = [enum.replace('.enumeration', '') for enum in enum_base]
@@ -426,12 +423,12 @@ def makeModuleIndex(sphinxDir, file):
         # "wx.lower.UpperName". This is so we don't put all the enums in the
         # submodules in the core wx module too.
         # TODO: This may not work on case-insensitive file systems, check it.
-        enum_files = glob.glob(sphinxDir + '/wx.[A-Z]*.enumeration.txt')
+        enum_files = sorted(glob.glob(sphinxDir + '/wx.[A-Z]*.enumeration.txt'))
     else:
         label = '.'.join(local_file.split('.')[0:2])
         module = label
         enumDots = 3
-        enum_files = glob.glob(sphinxDir + '/%s*.enumeration.txt' % module)
+        enum_files = sorted(glob.glob(sphinxDir + '/%s*.enumeration.txt' % module))
 
     enum_base = [os.path.split(os.path.splitext(enum)[0])[1] for enum in enum_files]
 
@@ -531,11 +528,11 @@ def genGallery():
         plat_folder = os.path.join(image_folder, folder)
         os.chdir(plat_folder)
 
-        image_files[folder] = glob.glob('*.png')
+        image_files[folder] = sorted(glob.glob('*.png'))
 
     os.chdir(pwd)
 
-    txt_files = glob.glob(SPHINXROOT + '/*.txt')
+    txt_files = sorted(glob.glob(SPHINXROOT + '/*.txt'))
     html_files = {}
 
     for text in txt_files:
@@ -647,9 +644,9 @@ def addJavaScript(text):
 # ----------------------------------------------------------------------- #
 
 def postProcess(folder, options):
-    fileNames = glob.glob(folder + "/*.html")
+    fileNames = sorted(glob.glob(folder + "/*.html"))
 
-    enum_files = glob.glob(folder + '/*.enumeration.html')
+    enum_files = sorted(glob.glob(folder + '/*.enumeration.html'))
 
     enum_base = [os.path.split(os.path.splitext(enum)[0])[1] for enum in enum_files]
     enum_base = [enum.replace('.enumeration', '') for enum in enum_base]
@@ -750,7 +747,7 @@ def removeHeaderImage(text, options):
     tag = soup.find('div', 'headerimage')
     if tag:
         tag.extract()
-        text = unicode(soup) if PY2 else str(soup)
+        text = str(soup)
     return text
 
 
@@ -762,7 +759,7 @@ def tweakModuleIndex(text):
         href = tag['href'].split('.html#')
         if len(href) == 2 and href[0] == href[1]:
             tag['href'] = href[0] + '.html'
-    return unicode(soup) if PY2 else str(soup)
+    return str(soup)
 
 
 def tooltipsOnInheritance(text, class_summary):

@@ -18,8 +18,6 @@ import subprocess
 from buildtools import builder
 from buildtools.config import getVisCVersion
 
-PY3 = sys.version_info[0] == 3
-
 # builder object
 wxBuilder = None
 
@@ -117,7 +115,7 @@ def macFixupInstallNames(destdir, prefix, buildDir=None):
     print("**** macFixupInstallNames(%s, %s, %s)" % (destdir, prefix, buildDir))
     pwd = os.getcwd()
     os.chdir(destdir+prefix+'/lib')
-    dylibs = glob.glob('*.dylib')     # ('*[0-9].[0-9].[0-9].[0-9]*.dylib')
+    dylibs = sorted(glob.glob('*.dylib'))     # ('*[0-9].[0-9].[0-9].[0-9]*.dylib')
     for lib in dylibs:
         cmd = 'install_name_tool -id %s/lib/%s %s/lib/%s' % \
               (prefix,lib,  destdir+prefix,lib)
@@ -370,13 +368,19 @@ def main(wxDir, args):
                 if os.path.exists(frameworkRootDir):
                     shutil.rmtree(frameworkRootDir)
 
+        # Workaround OpenSUSE libdir issue by unsetting CONFIG_SITE envvar
+        env = None
+        if "CONFIG_SITE" in os.environ:
+            env = dict(os.environ)
+            del env["CONFIG_SITE"]
+
         print("Configure options: " + repr(configure_opts))
         wxBuilder = builder.AutoconfBuilder()
         if not options.no_config and not options.clean:
             olddir = os.getcwd()
             if buildDir:
                 os.chdir(buildDir)
-            exitIfError(wxBuilder.configure(dir=wxRootDir, options=configure_opts),
+            exitIfError(wxBuilder.configure(dir=wxRootDir, options=configure_opts, env=env),
                         "Error running configure")
             os.chdir(olddir)
 
@@ -421,8 +425,7 @@ def main(wxDir, args):
         setupFile = os.path.join(mswIncludeDir, "setup.h")
         with open(setupFile, "rb") as f:
             setupText = f.read()
-            if PY3:
-                setupText = setupText.decode('utf-8')
+            setupText = setupText.decode('utf-8')
 
         for flag in flags:
             setupText, subsMade = re.subn(flag + r"\s+?\d", "%s %s" % (flag, flags[flag]), setupText)
@@ -431,8 +434,7 @@ def main(wxDir, args):
                 sys.exit(1)
 
         with open(setupFile, "wb") as f:
-            if PY3:
-                setupText = setupText.encode('utf-8')
+            setupText = setupText.encode('utf-8')
             f.write(setupText)
 
         args = []
@@ -571,7 +573,7 @@ def main(wxDir, args):
                 renameLibrary(libfile, "wx" + lib)
                 run("ln -s -f ../../../%s %s/wx%s" % (libfile, frameworkDir, lib))
 
-        for lib in glob.glob("lib/*.dylib"):
+        for lib in sorted(glob.glob("lib/*.dylib")):
             if not os.path.islink(lib):
                 corelibname = "lib/lib%s-%s.0.dylib" % (basename, version)
                 run("install_name_tool -id %s %s" % (os.path.join(prefixDir, lib), lib))
@@ -589,7 +591,7 @@ def main(wxDir, args):
 """
         headers = ""
         header_dir = "wx-%s/wx" % version
-        for include in glob.glob(header_dir + "/*.h"):
+        for include in sorted(glob.glob(header_dir + "/*.h")):
             headers += "#include <wx/" + os.path.basename(include) + ">\n"
 
         with open("%s.h" % fwname, "w") as framework_header:
