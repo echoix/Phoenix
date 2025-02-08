@@ -212,7 +212,7 @@ jobs:
 
       - name: Run unittests
         run: |
-          python build.py test
+          python build.py test --extra_pytest='--verbose --color=yes'
 
       - name: Save wheel as job artifact
         uses: actions/upload-artifact@v4
