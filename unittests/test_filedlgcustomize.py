@@ -7,7 +7,7 @@ import wx
 
 class filedlgcustomize_Tests(wtc.WidgetTestCase):
 
-    @unittest.skipIf(sys.platform.startswith("win") and sys.version_info < (3, 13), "Hanging in windows CI")
+    @unittest.skipIf(sys.platform.startswith("win") and sys.version_info < (3, 10), "Hanging in windows CI")
     def test_filedlgcustomize1(self):
         class MyFileDialogCustomizeHook(wx.FileDialogCustomizeHook):
             def __init__(self):
