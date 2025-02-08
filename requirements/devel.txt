@@ -1,9 +1,13 @@
 # Python packages needed for building and testing wxPython Phoenix
 -r install.txt
 appdirs
+setuptools
+sip == 6.9.1
 
 wheel
 twine
+requests >= 2.26.0
+cython==3.0.10
 pytest
 pytest-xdist
 pytest-forked
