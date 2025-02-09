@@ -67,7 +67,7 @@ jobs:
         #   CIBW_SOME_OPTION: value
         #    ...
         with:
-          package-dir: ${{ steps.sdist.outputs.download-path}}
+          package-dir: ${{ steps.sdist.outputs.download-path}}/*.tar.gz
         #   package-dir: .
         #   output-dir: wheelhouse
         #   config-file: "{package}/pyproject.toml"
