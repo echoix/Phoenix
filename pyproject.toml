@@ -83,3 +83,20 @@ build-backend = "setuptools.build_meta:__legacy__"
 [tool.setuptools.packages.find]
 exclude = ["src", "buildtools*", "etgtools", "sphinxtools", "src", "unittests"]
 namespaces = false
+
+
+[tool.cibuildwheel]
+# # Switch to using build
+# build-frontend = "build"
+
+# # Ensure pip is used even if the default changes in the future
+# build-frontend = "pip"
+
+# # supply an extra argument to 'pip wheel'
+# build-frontend = { name = "pip", args = ["--no-build-isolation"] }
+
+# Use uv and build
+build-frontend = "build[uv]"
+
+# # Use uv and build with an argument
+# build-frontend = { name = "build[uv]", args = ["--no-isolation"] }
