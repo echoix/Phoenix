@@ -101,3 +101,4 @@ namespaces = false
 
 # # Use uv and build with an argument
 # build-frontend = { name = "build[uv]", args = ["--no-isolation"] }
+build-verbosity = 2
