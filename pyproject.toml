@@ -97,7 +97,7 @@ namespaces = false
 # build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 
 # Use uv and build
-build-frontend = "build[uv]"
+# build-frontend = "build[uv]"
 
 # # Use uv and build with an argument
 # build-frontend = { name = "build[uv]", args = ["--no-isolation"] }
