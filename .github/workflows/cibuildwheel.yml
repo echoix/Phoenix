@@ -69,7 +69,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@ee63bf16da6cddfb925f542f2c7b59ad50e93969 # v2.22.0
         env:
-          CIBW_BEFORE_BUILD_LINUX : bash ./buildtools/install_depends.sh
+          CIBW_BEFORE_BUILD_LINUX : bash ../buildtools/install_depends.sh
           # && sudo apt install gettext
         with:
           package-dir: ${{ steps.sdist.outputs.download-path}}/${{env.SDIST_NAME}}
