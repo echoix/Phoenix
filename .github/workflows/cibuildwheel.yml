@@ -50,7 +50,7 @@ jobs:
             # macos-14,
             macos-latest,
           ]
-        architecture: ["native"]
+        architecture: ["auto"]
         include:
           - os: windows-2022
             architecture: "x86"
@@ -60,7 +60,7 @@ jobs:
             architecture: "AMD64"
         exclude:
           - os: windows-2022
-            architecture: native
+            architecture: auto
     env:
       SDIST_NAME: "wxPython-4.2.3a15860+d19bd208.tar.gz"
     steps:
