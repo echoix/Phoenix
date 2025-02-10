@@ -39,7 +39,8 @@ jobs:
         os: [
             # ubuntu-latest,
             # ubuntu-24.04-arm,
-            windows-latest,
+            windows-2022,
+            # windows-latest,
             macos-13,
             # macos-14,
             macos-latest,
