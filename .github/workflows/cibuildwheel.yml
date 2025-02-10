@@ -64,6 +64,10 @@ jobs:
         with:
           name: cibw-sdist
           path: dist/
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: 'x64'
       - name: Display structure of downloaded files
         run: ls -R
       - name: Build wheels
