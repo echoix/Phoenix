@@ -61,6 +61,7 @@ jobs:
         exclude:
           - os: windows-2022
             architecture: auto
+      fail-fast: false
     env:
       SDIST_NAME: "wxPython-4.2.3a15860+d19bd208.tar.gz"
     steps:
