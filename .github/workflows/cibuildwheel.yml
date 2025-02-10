@@ -42,10 +42,11 @@ jobs:
       matrix:
         # macos-13 is an intel runner, macos-14 is apple silicon
         os: [
-            # ubuntu-latest,
-            # ubuntu-24.04-arm,
+            ubuntu-latest,
+            ubuntu-24.04-arm,
             windows-2022,
-            # windows-latest,
+            windows-2025,
+            windows-latest,
             macos-13,
             # macos-14,
             macos-latest,
@@ -54,12 +55,22 @@ jobs:
         include:
           - os: windows-2022
             architecture: "x86"
-          # - os: windows-2022
-          #   architecture: "x64"
           - os: windows-2022
+            architecture: "AMD64"
+          - os: windows-2025
+            architecture: "x86"
+          - os: windows-2025
+            architecture: "AMD64"
+          - os: windows-latest
+            architecture: "x86"
+          - os: windows-latest
             architecture: "AMD64"
         exclude:
           - os: windows-2022
+            architecture: auto
+          - os: windows-2025
+            architecture: auto
+          - os: windows-latest
             architecture: auto
       fail-fast: false
     env:
