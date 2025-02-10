@@ -84,7 +84,7 @@ jobs:
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: '${{ matrix.architecture }}'
+          arch: "${{ matrix.architecture }}"
       - name: Display structure of downloaded files
         run: ls -R
       - name: Build wheels
@@ -93,7 +93,7 @@ jobs:
           CIBW_BUILD_VERBOSITY: 2
           CIBW_ARCHS: ${{ matrix.architecture }}
           # maybe the linux container is using yum
-          CIBW_BEFORE_BUILD_LINUX : bash ./buildtools/install_depends.sh
+          CIBW_BEFORE_BUILD_LINUX: bash ./buildtools/install_depends.sh
           # && sudo apt install gettext
           # # from matplotlib:
           # # On Windows, we explicitly request MSVC compilers (as GitHub Action runners have
