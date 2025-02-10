@@ -49,8 +49,8 @@ jobs:
         include:
           - os: windows-2022
             architecture: "x86"
-          - os: windows-2022
-            architecture: "x64"
+          # - os: windows-2022
+          #   architecture: "x64"
           - os: windows-2022
             architecture: "AMD64"
         exclude:
