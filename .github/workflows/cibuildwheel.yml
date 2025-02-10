@@ -113,6 +113,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@ee63bf16da6cddfb925f542f2c7b59ad50e93969 # v2.22.0
         env:
+          CIBW_SKIP: "pp3*"
           CIBW_BUILD_VERBOSITY: 1
           CIBW_ARCHS: ${{ matrix.architecture }}
           # maybe the linux container is using yum
