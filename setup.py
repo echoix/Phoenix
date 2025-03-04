@@ -20,6 +20,7 @@ from setuptools.command.bdist_egg   import bdist_egg as orig_bdist_egg
 from setuptools.command.sdist       import sdist as orig_sdist
 from setuptools.command.bdist_wheel import bdist_wheel as orig_bdist_wheel
 
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from buildtools.config import Config, msg, opj, runcmd, canGetSOName, getSOName
 import buildtools.version as version
 
