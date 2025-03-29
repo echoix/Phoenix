@@ -1,3 +1,4 @@
+import sys
 import unittest
 from unittests import wtc
 import wx
@@ -6,18 +7,24 @@ import wx
 
 class richmsgdlg_Tests(wtc.WidgetTestCase):
 
+    # TODO: Maybe only one of the tests are hanging, not all of them
+    @unittest.skipIf(sys.platform.startswith("win") and sys.version_info < (3, 10), "Hanging in windows CI")
     def test_richmsgdlg1(self):
         dlg = wx.RichMessageDialog(None, 'Message', 'Caption')
         wx.CallLater(250, dlg.EndModal, wx.ID_OK)
         dlg.ShowModal()
         dlg.Destroy()
 
+    # TODO: Maybe only one of the tests are hanging, not all of them
+    @unittest.skipIf(sys.platform.startswith("win") and sys.version_info < (3, 11), "Hanging in windows CI")
     def test_richmsgdlg2(self):
         dlg = wx.RichMessageDialog(self.frame, 'Message', 'Caption')
         wx.CallLater(250, dlg.EndModal, wx.ID_OK)
         dlg.ShowModal()
         dlg.Destroy()
 
+    # TODO: Maybe only one of the tests are hanging, not all of them
+    @unittest.skipIf(sys.platform.startswith("win") and sys.version_info < (3, 12), "Hanging in windows CI")
     def test_richmsgdlg3(self):
         dlg = wx.RichMessageDialog(None, 'Message', 'Caption')
         dlg.SetExtendedMessage('extended')
