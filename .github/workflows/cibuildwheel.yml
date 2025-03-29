@@ -1,0 +1,177 @@
+name: cibuildwheel
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+# Cancel the workflow if another instance in the same workflow and PR is triggered
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_sdist:
+    name: Build source distribution
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |-
+            dist/
+
+      # - name: Build sdist
+      #   run: pipx run build --sdist
+
+      - uses: actions/upload-artifact@v4
+        id: sdist
+        with:
+          name: cibw-sdist
+          path: dist/*.tar.gz
+
+  build_wheels:
+    # name: Build wheels on ${{ matrix.os }}
+    needs: build_sdist
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # macos-13 is an intel runner, macos-14 is apple silicon
+        os: [
+            ubuntu-latest,
+            ubuntu-24.04-arm,
+            windows-2019,
+            windows-2022,
+            windows-2025,
+            #windows-latest,
+            macos-13,
+            # macos-14,
+            macos-latest,
+          ]
+        architecture: ["auto"]
+        include:
+          - os: windows-2019
+            architecture: "x86"
+          - os: windows-2019
+            architecture: "AMD64"
+          - os: windows-2022
+            architecture: "x86"
+          - os: windows-2022
+            architecture: "AMD64"
+          - os: windows-2025
+            architecture: "x86"
+          - os: windows-2025
+            architecture: "AMD64"
+          - os: windows-latest
+            architecture: "x86"
+          - os: windows-latest
+            architecture: "AMD64"
+        exclude:
+          - os: windows-2022
+            architecture: auto
+          - os: windows-2025
+            architecture: auto
+          - os: windows-latest
+            architecture: auto
+      fail-fast: false
+    env:
+      SDIST_NAME: "wxPython-4.2.3a15860+d19bd208.tar.gz"
+    steps:
+      # - uses: actions/checkout@v4
+      #   with:
+      #     submodules: "recursive"
+      #     fetch-depth: 10
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            buildtools/
+
+      # - name: Install uv
+      #   uses: astral-sh/setup-uv@4db96194c378173c656ce18a155ffc14a9fc4355 # v5.2.2
+      - name: Download sdist
+        id: sdist
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: cibw-sdist
+          path: dist/
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
+        with:
+          arch: "${{ matrix.architecture }}"
+      - name: Set macOS deployment target
+        if: runner.os == 'macOS'
+        run: echo "MACOSX_DEPLOYMENT_TARGET=$(sw_vers -productVersion | cut -d '.' -f 1-2)" >> $GITHUB_ENV
+      - name: Check macOS deployment target
+        if: runner.os == 'macOS'
+        run: echo "Deployment target version is ${{ env.MACOSX_DEPLOYMENT_TARGET }} / ${MACOSX_DEPLOYMENT_TARGET}"
+      - name: Display structure of downloaded files
+        run: ls -R
+      - name: Build wheels
+        uses: pypa/cibuildwheel@ee63bf16da6cddfb925f542f2c7b59ad50e93969 # v2.22.0
+        env:
+          CIBW_SKIP: "pp3*"
+          CIBW_BUILD_VERBOSITY: 1
+          CIBW_ARCHS: ${{ matrix.architecture }}
+          # maybe the linux container is using yum
+          CIBW_BEFORE_BUILD_LINUX: bash ./buildtools/install_depends.sh
+          # && sudo apt install gettext
+          # # from matplotlib:
+          # # On Windows, we explicitly request MSVC compilers (as GitHub Action runners have
+          # # MinGW on PATH that would be picked otherwise), switch to a static build for
+          # # runtimes, but use dynamic linking for `VCRUNTIME140.dll`, `VCRUNTIME140_1.dll`,
+          # # and the UCRT. This avoids requiring specific versions of `MSVCP140.dll`, while
+          # # keeping shared state with the rest of the Python process/extensions.
+          # CIBW_CONFIG_SETTINGS_WINDOWS: >-
+          #   setup-args="--vsenv"
+          #   setup-args="-Db_vscrt=mt"
+          #   setup-args="-Dcpp_link_args=['ucrt.lib','vcruntime.lib','/nodefaultlib:libucrt.lib','/nodefaultlib:libvcruntime.lib']"
+        with:
+          package-dir: ${{ steps.sdist.outputs.download-path}}/${{env.SDIST_NAME}}
+        #   package-dir: .
+        #   output-dir: wheelhouse
+        #   config-file: "{package}/pyproject.toml"
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ./wheelhouse/*.whl
+
+  # build_sdist:
+  #   name: Build source distribution
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - name: Build sdist
+  #       run: pipx run build --sdist
+
+  #     - uses: actions/upload-artifact@v4
+  #       with:
+  #         name: cibw-sdist
+  # #         path: dist/*.tar.gz
+
+  # upload_pypi:
+  #   needs: [build_wheels, build_sdist]
+  #   runs-on: ubuntu-latest
+  #   environment: pypi
+  #   permissions:
+  #     id-token: write
+  #   if: github.event_name == 'release' && github.event.action == 'published'
+  #   # or, alternatively, upload to PyPI on every tag starting with 'v' (remove on: release above to use this)
+  #   # if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+  #   steps:
+  #     - uses: actions/download-artifact@v4
+  #       with:
+  #         # unpacks all CIBW artifacts into dist/
+  #         pattern: cibw-*
+  #         path: dist
+  #         merge-multiple: true
+
+  #     - uses: pypa/gh-action-pypi-publish@release/v1
+  #       with:
+  #         # To test: repository-url: https://test.pypi.org/legacy/
