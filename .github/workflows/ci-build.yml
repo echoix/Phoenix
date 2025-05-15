@@ -111,6 +111,16 @@ jobs:
         python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13' ]
         architecture: [ 'x86', 'x64', 'arm64' ]
         # Exclude x86 configs on non-Windows OSs
+        include:
+          - python-version: '3.10'
+            os: 'windows-2022'
+            architecture: 'x64'
+          - python-version: '3.11'
+            os: 'windows-2022'
+            architecture: 'x64'
+          - python-version: '3.12'
+            os: 'windows-2022'
+            architecture: 'x64'
         exclude:
           - os: ubuntu-22.04
             architecture: x86
@@ -234,7 +244,10 @@ jobs:
           cd dist
           pip install wxpython-*.whl
           python -c "import wx; print(wx); print(wx.version()); print(wx.PlatformInfo)"
-          pip uninstall --yes wxPython
+
+      - name: Run unittests
+        run: |
+          python build.py test --extra_pytest='--verbose --color=yes'
 
       - name: Save wheel as job artifact
         uses: actions/upload-artifact@v4
