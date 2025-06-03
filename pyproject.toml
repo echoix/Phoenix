@@ -39,8 +39,11 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: User Interfaces",
 ]
+dependencies = [
+    "numpy >= 1.11.1",
+    "typing-extensions>=4.0.0; python_full_version < '3.11'",
+]
 dynamic = [
-    "dependencies",
     "license",
     "readme",
     "version",

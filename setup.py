@@ -60,12 +60,6 @@ the respective items. (Documents are launched in the default browser and demo is
 with python).
 """.format(version=cfg.VERSION, docs_base=DOCS_BASE)
 
-
-with open('requirements/install.txt') as fid:
-    INSTALL_REQUIRES = [line.strip()
-                        for line in fid.readlines()
-                        if not line.startswith('#')]
-
 isWindows = sys.platform.startswith('win')
 isDarwin = sys.platform == "darwin"
 
@@ -306,7 +300,6 @@ if __name__ == '__main__':
           long_description_content_type = 'text/x-rst',
           license          = LICENSE,
           platforms        = PLATFORMS,
-          install_requires = INSTALL_REQUIRES,
           zip_safe         = False,
           include_package_data = True,
 
