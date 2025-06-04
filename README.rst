@@ -426,3 +426,4 @@ once per day, on any day that has had a commit to the master branch.
 
 .. image:: docs/phoenix-fire-md.png
    :width: 100%
+
