@@ -4,16 +4,16 @@ import wx
 
 #---------------------------------------------------------------------------
 
+class MyFileDialogCustomizeHook(wx.FileDialogCustomizeHook):
+    def __init__(self):
+        super().__init__()
+        self.add_called = False
+    def AddCustomControls(self, customizer):
+        self.add_called = True
+
 class filedlgcustomize_Tests(wtc.WidgetTestCase):
 
     def test_filedlgcustomize1(self):
-        class MyFileDialogCustomizeHook(wx.FileDialogCustomizeHook):
-            def __init__(self):
-                super().__init__()
-                self.add_called = False
-            def AddCustomControls(self, customizer):
-                self.add_called = True
-
         hook = MyFileDialogCustomizeHook()
         dlg = wx.FileDialog(None, 'Save Document', '', 'file.my')
         dlg.SetCustomizeHook(hook)
