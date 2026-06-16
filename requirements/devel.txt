@@ -15,4 +15,4 @@ sphinx
 python-docs-theme
 doc2dash
 beautifulsoup4
-typing-extensions; python_version < '3.11'
+typing-extensions>=4.0.0 ; python_version < '3.11'
