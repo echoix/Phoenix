@@ -50,8 +50,13 @@ def load_module(moduleName, searchPath):
     except Exception:
         import importlib.machinery
         import importlib.util
+        if '.' in moduleName:
+            raise ImportError("No module named %r" % moduleName, name=moduleName)
+        # The files may have been created after the directory was last scanned
+        importlib.invalidate_caches()
         spec = importlib.machinery.PathFinder.find_spec(moduleName, list(searchPath) if searchPath else None)
-        if spec is None:
+        # A directory without __init__.py would load as an empty namespace package
+        if spec is None or spec.origin is None or spec.loader is None:
             raise ImportError("No module named %r" % moduleName, name=moduleName)
         module = importlib.util.module_from_spec(spec)
         sys.modules[moduleName] = module

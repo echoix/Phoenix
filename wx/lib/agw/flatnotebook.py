@@ -6443,7 +6443,7 @@ class PageContainer(wx.Panel):
 
             # There is an alignment problem with wx2.6.3 & Menus so only use
             # images for versions above 2.6.3
-            if wx.VERSION > (2, 6, 3, 0) and self.TabHasImage(i):
+            if self.TabHasImage(i):
                 item.SetBitmap(self.GetImageList().GetBitmap(pi.GetImageIndex()))
 
             popupMenu.Append(item)

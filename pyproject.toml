@@ -147,11 +147,14 @@ reruns = 2
 # Guard against leftovers from old Python/wx versions creeping back in.
 # UP036 flags version checks that are always true/false for requires-python;
 # F821 flags Python 2 names such as xrange/unicode/basestring.
-# Only the build tooling and the wx package are checked for now: demo/, docs/
-# and src/ contain snippets and templates that are not valid Python.
+# Only the build tooling and the wx package are checked for now: docs/ holds
+# snippets that are not valid Python, demo/ and src/ rely on injected or
+# template names, and unittests/ still has some leftovers to clean up.
+# Not run in CI yet: run `ruff check .` by hand.
 [tool.ruff]
 target-version = "py311"
-extend-exclude = ["b", "demo", "docs", "packaging", "samples", "src", "unittests"]
+extend-exclude = ["demo", "docs", "packaging", "src", "unittests"]
+extend-include = ["wscript"]
 
 [tool.ruff.lint]
 select = ["UP036", "F821"]
@@ -167,4 +170,5 @@ select = ["UP036", "F821"]
 "wx/lib/masked/maskededit.py" = ["F821"]
 "wx/lib/pydocview.py" = ["F821"]
 "wx/lib/agw/speedmeter.py" = ["F821"]
-"wx/py/*.py" = ["F821"]
+"wx/py/crustslices.py" = ["F821"]
+"wx/py/sliceshell.py" = ["F821"]
