@@ -83,6 +83,17 @@ decoding errors. For example::
     chcp 1252
     python build_wxpy.py <build commands>...
 
+wxWidgets itself is built with `CMake <https://cmake.org/>`_ (3.15 or newer
+must be on the ``PATH``) on all platforms. This replaced the old
+``nmake``/``makefile.vc`` build on Windows and the autoconf build elsewhere.
+The settings that wxPython needs are in the static initial cache
+``buildtools/cmake/wxpython.cmake``. CMake is installed with Visual Studio's
+C++ CMake tools, from your package manager, or with ``pip install cmake``.
+Use ``--generator=Ninja`` (or set ``CMAKE_GENERATOR``) to choose a generator
+other than CMake's default. The ``--jom`` option is ignored now. The old
+autoconf build is deprecated but still available on Linux and macOS with
+``--autoconf`` (it is used automatically for ``--mac_framework``).
+
 In addition, some tasks within the build currently expect to be able to use
 Cygwin on Windows (https://www.cygwin.com/) to do its work. If you have
 Cygwin installed in one of the default locations (c:\\cygwin or c:\\cygwin64)

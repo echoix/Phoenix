@@ -43,7 +43,7 @@ from buildtools.config  import Config, msg, opj, posixjoin, loadETG, etg2sip, fi
                                phoenixDir, wxDir, copyIfNewer, copyFile, \
                                macSetLoaderNames, \
                                getVcsRev, runcmd, getSipFiles, \
-                               getVisCVersion, getToolsPlatformName, updateLicenseFiles, \
+                               getToolsPlatformName, updateLicenseFiles, \
                                TemporaryDirectory, getMSVCInfo, generateVersionFiles
 
 import buildtools.version as version
@@ -394,12 +394,12 @@ def getMSWSettings(options):
         pass
     msw = MSWsettings()
     msw.CPU = os.environ.get('CPU')
-    if msw.CPU in ['AMD64', 'X64', 'ARM64'] or PYTHON_ARCH == '64bit':
-        msw.dllArch = 'arm64' if msw.CPU == 'ARM64' else 'x64'
-        msw.dllDir = posixjoin(wxDir(), "lib", "vc%s_%s_dll" % (getVisCVersion(), msw.dllArch))
-    else:
-        msw.dllDir = posixjoin(wxDir(), "lib", "vc%s_dll" % getVisCVersion())
-    msw.buildDir = posixjoin(wxDir(), "build", "msw")
+    from buildtools import cmake_wx
+    msw.dllArch = cmake_wx.mswArch(msw.CPU, PYTHON_ARCH == '64bit')
+    # wxWidgets is built with CMake, out of tree.  Its DLLs, import libs and
+    # generated setup.h all end up below this folder.
+    msw.buildDir = cmake_wx.mswBuildDir(wxDir(), msw.dllArch)
+    msw.dllDir = cmake_wx.mswLibDir(wxDir(), msw.dllArch)
 
     msw.dll_type = "u"
     if options.debug:
@@ -454,7 +454,9 @@ def makeOptionParser():
         ("upload",         (False, "Upload bdist and/or sdist packages to snapshot server.")),
         ("cairo",          (False, "Allow Cairo use with wxGraphicsContext (Windows only)")),
         ("x64",            (False, "Use and build for the 64bit version of Python on Windows")),
-        ("jom",            (False, "Use jom instead of nmake for the wxMSW build")),
+        ("jom",            (False, "DEPRECATED and ignored: the wxMSW build now uses CMake.")),
+        ("generator",      ("",    "CMake generator for the wxWidgets build (-G), e.g. Ninja. Default: CMake's default.")),
+        ("autoconf",       (False, "DEPRECATED: build wxWidgets with its autoconf build instead of CMake (not on MSW; implied by --mac_framework).")),
         ("pytest_timeout", ("",    "Timeout, in seconds, for stopping stuck test cases. Overrides the default set in pyproject.toml; use 0 to disable.")),
         ("pytest_jobs",    ("",    "Number of parallel processes py.test should run. Overrides the default (auto) set in pyproject.toml.")),
         ("docker_img",     ("all", "Comma separated list of image tags to use for the build_docker command. Defaults to \"all\"")),
@@ -526,11 +528,34 @@ class pushDir(object):
         os.chdir(self.cwd)
 
 
+def useAutoconf(options):
+    return bool(options.autoconf or (options.mac_framework and isDarwin))
+
+
+def warnIfOldAutoconfTree(options):
+    """
+    The CMake build uses its own build folder.  Tell people who still have an
+    autoconf tree from an earlier version where it went.
+    """
+    if isWindows or useAutoconf(options) or options.build_dir:
+        return
+    new = getBuildDir(options)
+    old = new[:-len('-cmake')]
+    if (os.path.exists(opj(old, 'config.status')) and
+            not os.path.exists(opj(new, 'CMakeCache.txt'))):
+        msg('NOTE: wxWidgets is now built with CMake in %s. The old autoconf build in\n'
+            '      %s is no longer used; run build_wx to build the new one, and delete\n'
+            '      the old folder when you no longer need it (or use --autoconf).' % (new, old))
+
+
 def getBuildDir(options):
     if not isDarwin and not isWindows:
         BUILD_DIR = opj(phoenixDir(), 'build', 'wxbld', 'gtk3' if options.gtk3 else 'gtk2')
     else:
         BUILD_DIR = opj(phoenixDir(), 'build', 'wxbld')
+    if not isWindows and not useAutoconf(options):
+        # An autoconf and a CMake build tree must never share a folder.
+        BUILD_DIR += '-cmake'
     if options.build_dir:
         BUILD_DIR = os.path.abspath(options.build_dir)
     return BUILD_DIR
@@ -1636,6 +1661,7 @@ def cmd_build_wx(options, args):
         msg("use_syswx option specified, skipping wxWidgets build")
         return
     checkCompiler()
+    warnIfOldAutoconfTree(options)
 
     build_options = ['--wxpython']
 
@@ -1655,7 +1681,10 @@ def cmd_build_wx(options, args):
             os.environ['CAIRO_ROOT'] = cairo_root
 
         if options.jom:
-            build_options.append('--jom')
+            msg('WARNING: --jom is deprecated and ignored, the wxMSW build now uses CMake.')
+        if options.autoconf:
+            msg('WARNING: --autoconf is not available on Windows, ignoring.')
+        build_options.append('--arch=%s' % getMSWSettings(options).dllArch)
 
     else:
         # Platform is something other than MSW
@@ -1682,7 +1711,7 @@ def cmd_build_wx(options, args):
 
         if options.no_config:
             build_options.append('--no_config')
-        elif not options.force_config:
+        elif not options.force_config and useAutoconf(options):
             dependencies = [ os.path.join(wxDir(), 'Makefile.in'),
                              os.path.join(wxDir(), 'configure'),
                              os.path.join(wxDir(), 'setup.h.in'),
@@ -1716,8 +1745,17 @@ def cmd_build_wx(options, args):
     if options.debug or (isWindows and options.both):
         build_options.append('--debug')
 
+    if options.generator:
+        build_options.append('--generator=%s' % options.generator)
+    if not isWindows:
+        if options.autoconf:
+            build_options.append('--autoconf')
+        build_options.append('--builddir=%s' % BUILD_DIR)
+    if options.force_config:
+        build_options.append('--force_config')
+
     if options.extra_make:
-        build_options.append('--extra_make="%s"' % options.extra_make)
+        build_options.append('--extra_make=%s' % options.extra_make)
 
     if not isWindows and not isDarwin and not options.no_magic and not options.use_syswx:
         # Using $ORIGIN in the rpath will cause the dynamic linker to look
@@ -1736,6 +1774,8 @@ def cmd_build_wx(options, args):
         # build again without the --debug flag?
         if isWindows and options.both:
             build_options.remove('--debug')
+            if '--force_config' in build_options:
+                build_options.remove('--force_config')  # the first pass already did it
             print('wxWidgets build options: ' + str(build_options))
             wxbuild.main(wxDir(), build_options)
 
@@ -1840,6 +1880,7 @@ def cmd_build_py(options, args):
 
     waf = getWafCmd()
     checkCompiler()
+    warnIfOldAutoconfTree(options)
 
     BUILD_DIR = getBuildDir(options)
 
@@ -2046,8 +2087,14 @@ def cmd_install_wx(options, args):
         msg('Magic is in use, wxWidgets will be installed with wxPython')
         return
 
-    # Otherwise, run 'make install' in the wx build folder
+    # Otherwise, install from the wx build folder
     BUILD_DIR = getBuildDir(options)
+    if not useAutoconf(options):
+        destdir = 'DESTDIR="%s" ' % options.destdir if options.destdir else ''
+        runcmd('%s"%s" --install "%s" --config %s' % (
+            destdir, os.environ.get('CMAKE', 'cmake'), BUILD_DIR,
+            'Debug' if options.debug else 'Release'))
+        return
     DESTDIR = '' if not options.destdir else 'DESTDIR=' + options.destdir
     pwd = pushDir(BUILD_DIR)
     runcmd("make install %s %s" % (DESTDIR, options.extra_make))
@@ -2106,22 +2153,9 @@ def cmd_egg_info(options, args, egg_base=None):
 def cmd_clean_wx(options, args):
     cmdTimer = CommandTimer('clean_wx')
     if isWindows:
-        if options.both:
-            options.debug = True
+        # Both configs live in the same CMake build tree, so it all goes.
         msw = getMSWSettings(options)
-        deleteIfExists(opj(msw.dllDir, 'msw'+msw.dll_type))
-        delFiles(sorted(glob.glob(opj(msw.dllDir, 'wx*%s%s*' % (wxversion2_nodot, msw.dll_type)))))
-        delFiles(sorted(glob.glob(opj(msw.dllDir, 'wx*%s%s*' % (wxversion3_nodot, msw.dll_type)))))
-        if PYTHON_ARCH == '64bit':
-            deleteIfExists(opj(msw.buildDir, 'vc%s_%s_msw%sdll' % (getVisCVersion(), msw.dllArch, msw.dll_type)))
-        else:
-            deleteIfExists(opj(msw.buildDir, 'vc%s_msw%sdll' % (getVisCVersion(), msw.dll_type)))
-
-        if options.both:
-            options.debug = False
-            options.both = False
-            cmd_clean_wx(options, args)
-            options.both = True
+        deleteIfExists(msw.buildDir)
     else:
         BUILD_DIR = getBuildDir(options)
         deleteIfExists(BUILD_DIR)

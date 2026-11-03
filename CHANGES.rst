@@ -12,6 +12,20 @@ wxPython Changelog
 
 
 
+Unreleased
+----------
+* wxWidgets is now built with CMake on all platforms instead of ``nmake`` /
+  ``makefile.vc`` on Windows and autoconf elsewhere (#2909).  The settings
+  wxPython needs live in ``buildtools/cmake/wxpython.cmake``, and wxWidgets'
+  ``include/wx/msw/setup.h`` is no longer modified in place.  CMake 3.15+ is
+  now required to build from source (installed automatically for pip builds).  The ``--jom`` option is deprecated and ignored, ``--generator``
+  was added to select the CMake generator, and ``--autoconf`` keeps the old
+  build on Linux/macOS (deprecated; needed for ``--mac_framework``).  On
+  Windows the DLLs and import libraries now live in
+  ``ext/wxWidgets/build/cmake-msw-<arch>/lib/``; on Linux/macOS the build tree
+  is ``build/wxbld/gtk3-cmake`` (or ``build/wxbld-cmake`` on macOS).
+
+
 4.3.2
 ------
 * 12-Oct-2026
