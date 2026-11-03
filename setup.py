@@ -14,8 +14,9 @@ import glob
 import stat
 import shutil
 
-from setuptools                     import setup, Distribution
+from setuptools                     import setup, Extension
 from setuptools.command.build       import build as orig_build
+from setuptools.command.build_ext   import build_ext as orig_build_ext
 from setuptools.command.build_py    import build_py as orig_build_py
 from setuptools.command.install     import install as orig_install
 from setuptools.command.install_lib import install_lib as orig_install_lib
@@ -26,6 +27,7 @@ from setuptools.command.bdist_wheel import bdist_wheel as orig_bdist_wheel
 sys.path.insert(0, os.path.dirname(__file__))
 
 from buildtools.config import Config, msg, opj, runcmd, canGetSOName, getSOName
+from buildtools.config import getExtensionModuleNames
 
 # Create a buildtools.config.Configuration object
 cfg = Config(noWxConfig=True)
@@ -78,10 +80,6 @@ class wx_build(orig_build):
         orig_build.initialize_options(self)
         self.skip_build = '--skip-build' in sys.argv
 
-    def finalize_options(self):
-        orig_build.finalize_options(self)
-        self.build_lib = self.build_platlib
-
     def run(self):
         if not self.skip_build:
             # Run build_wxpy.py to do the actual building of the extension modules
@@ -96,9 +94,31 @@ class wx_build(orig_build):
             cmd = ' '.join(cmd)
             runcmd(cmd)
 
-        # Let setuptools handle building up the package folder under the
-        # build/lib folder like normal.
+        # Let setuptools handle building up the package folder in build_lib
+        # like normal. Its build_ext step (see wx_build_ext) picks up the
+        # extension modules built above.
         orig_build.run(self)
+
+
+class wx_build_ext(orig_build_ext):
+    """
+    The extension modules are compiled by build_wxpy.py (with waf, and
+    setup-wxsvg.py for wx.svg), which leaves them in the wx package folder.
+    They are declared to setuptools as sourceless Extensions so it treats
+    wxPython as a platform-specific distribution, and this command copies
+    the prebuilt files into place instead of compiling anything.
+    """
+    def build_extension(self, ext):
+        # get_ext_filename() gives the module's path relative to the project
+        # root, using the same EXT_SUFFIX that waf names its outputs with.
+        src = self.get_ext_filename(ext.name)
+        dst = self.get_ext_fullpath(ext.name)
+        if not os.path.exists(src):
+            raise FileNotFoundError(
+                "Extension module {} has not been built (expected {}). "
+                "Run 'build_wxpy.py build' first.".format(ext.name, src))
+        self.mkpath(os.path.dirname(dst))
+        self.copy_file(src, dst)
 
 
 def _cleanup_symlinks(cmd):
@@ -136,14 +156,6 @@ def _cleanup_symlinks(cmd):
                 pass
 
 
-class WxDistribution(Distribution):
-    # Let setuptools/bdist_wheel know that there really are extension modules
-    # in this build (so the wheel gets a platform tag), even though they are
-    # not built here.
-    def has_ext_modules(self):
-        return True
-
-
 class wx_bdist_wheel(orig_bdist_wheel):
     def run(self):
         # Ensure that there is a basic library build for bdist_wheel to pull from.
@@ -156,10 +168,6 @@ class wx_bdist_wheel(orig_bdist_wheel):
 
 
 class wx_install(orig_install):
-    def finalize_options(self):
-        orig_install.finalize_options(self)
-        self.install_lib = self.install_platlib
-
     def run(self):
         self.run_command("build")
         orig_install.run(self)
@@ -226,6 +234,7 @@ class wx_sdist(orig_sdist):
 # Map these new classes to the appropriate setuptools command names.
 CMDCLASS = {
     'build'       : wx_build,
+    'build_ext'   : wx_build_ext,
     'build_py'    : wx_build_py,
     'install'     : wx_install,
     'install_lib' : wx_install_lib,
@@ -256,5 +265,6 @@ if __name__ == '__main__':
           long_description = LONG_DESCRIPTION,
           long_description_content_type = 'text/x-rst',
           cmdclass         = CMDCLASS,
-          distclass        = WxDistribution,
+          ext_modules      = [Extension(name, sources=[])
+                              for name in getExtensionModuleNames()],
         )
