@@ -143,3 +143,28 @@ addopts = "-nauto"
 timeout = 60
 timeout_method = "thread"
 reruns = 2
+
+# Guard against leftovers from old Python/wx versions creeping back in.
+# UP036 flags version checks that are always true/false for requires-python;
+# F821 flags Python 2 names such as xrange/unicode/basestring.
+# Only the build tooling and the wx package are checked for now: demo/, docs/
+# and src/ contain snippets and templates that are not valid Python.
+[tool.ruff]
+target-version = "py311"
+extend-exclude = ["b", "demo", "docs", "packaging", "samples", "src", "unittests"]
+
+[tool.ruff.lint]
+select = ["UP036", "F821"]
+
+[tool.ruff.lint.per-file-ignores]
+# Pre-existing undefined names, to be fixed separately; remove entries as fixed.
+"buildtools/config.py" = ["F821"]
+"etgtools/sphinx_generator.py" = ["F821"]
+"wx/lib/CDate.py" = ["F821"]
+"wx/lib/ClickableHtmlWindow.py" = ["F821"]
+"wx/lib/inspection.py" = ["F821"]
+"wx/lib/langlistctrl.py" = ["F821"]
+"wx/lib/masked/maskededit.py" = ["F821"]
+"wx/lib/pydocview.py" = ["F821"]
+"wx/lib/agw/speedmeter.py" = ["F821"]
+"wx/py/*.py" = ["F821"]

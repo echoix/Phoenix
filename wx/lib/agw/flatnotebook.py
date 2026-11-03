@@ -201,10 +201,6 @@ if wx.Platform == '__WXMAC__':
     else:
         CARBON = True
 
-# Check for the new method in 2.7 (not present in 2.6.3.3)
-if wx.VERSION_STRING < "2.7":
-    wx.Rect.Contains = lambda self, point: wx.Rect.Inside(self, point)
-
 FNB_HEIGHT_SPACER = 10
 """ Padding for the tab widths/heights, in pixels. """
 

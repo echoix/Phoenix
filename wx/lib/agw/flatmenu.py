@@ -277,10 +277,6 @@ try:
 except ImportError:
     pass
 
-# Check for the new method in 2.7 (not present in 2.6.3.3)
-if wx.VERSION_STRING < "2.7":
-    wx.Rect.Contains = lambda self, point: wx.Rect.Inside(self, point)
-
 
 wxEVT_FLAT_MENU_DISMISSED = wx.NewEventType()
 wxEVT_FLAT_MENU_SELECTED = wx.wxEVT_COMMAND_MENU_SELECTED

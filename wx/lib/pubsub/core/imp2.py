@@ -43,20 +43,17 @@ def _import_module(name, package=None):
 
     
 def load_module(moduleName, searchPath):
-    """Try to import moduleName. If this doesn't work, use the "imp" module
-    that is part of Python. """
-    try: 
-        module = _import_module(moduleName) 
-        
-    except:
-        import imp
-        fp, pathname, description = imp.find_module(moduleName, searchPath)
-        try:
-            module = imp.load_module(moduleName, fp, pathname, description)
-            
-        finally:
-            # Since we may exit via an exception, close fp explicitly.
-            if fp:
-                fp.close()
-                
-    return module
+    """Try to import moduleName. If this doesn't work, look for it in
+    searchPath using importlib."""
+    try:
+        return _import_module(moduleName)
+    except Exception:
+        import importlib.machinery
+        import importlib.util
+        spec = importlib.machinery.PathFinder.find_spec(moduleName, list(searchPath) if searchPath else None)
+        if spec is None:
+            raise ImportError("No module named %r" % moduleName, name=moduleName)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[moduleName] = module
+        spec.loader.exec_module(module)
+        return module

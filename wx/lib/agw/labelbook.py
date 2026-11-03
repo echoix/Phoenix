@@ -188,10 +188,6 @@ import wx
 from .artmanager import ArtManager, DCSaver
 from .fmresources import *
 
-# Check for the new method in 2.7 (not present in 2.6.3.3)
-if wx.VERSION_STRING < "2.7":
-    wx.Rect.Contains = lambda self, point: wx.Rect.Inside(self, point)
-
 # FlatImageBook and LabelBook styles
 INB_BOTTOM = 1
 """ Place labels below the page area. Available only for :class:`FlatImageBook`."""

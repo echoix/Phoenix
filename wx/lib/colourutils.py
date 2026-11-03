@@ -18,15 +18,6 @@ __author__ = "Cody Precord <cprecord@editra.org>"
 
 import wx
 
-# Used on OSX to get access to carbon api constants
-if wx.Platform == '__WXMAC__':
-    try:
-        import Carbon.Appearance
-    except ImportError:
-        CARBON = False
-    else:
-        CARBON = True
-
 #-----------------------------------------------------------------------------#
 
 def AdjustAlpha(colour, alpha):
@@ -102,17 +93,6 @@ def GetHighlightColour():
 
     :rtype: :class:`wx.Colour`
     """
-
-    if wx.Platform == '__WXMAC__':
-        if CARBON:
-            if wx.VERSION < (2, 9, 0, 0, ''):
-                # kThemeBrushButtonPressedLightHighlight
-                brush = wx.Brush(wx.BLACK)
-                brush.MacSetTheme(Carbon.Appearance.kThemeBrushFocusHighlight)
-                return brush.GetColour()
-            else:
-                color = wx.MacThemeColour(Carbon.Appearance.kThemeBrushFocusHighlight)
-                return color
 
     # Fallback to text highlight color
     return wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
