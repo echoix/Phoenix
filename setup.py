@@ -13,6 +13,7 @@ import sys, os
 import glob
 import stat
 import shutil
+import sysconfig
 
 from setuptools                     import setup, Extension
 from setuptools.command.build       import build as orig_build
@@ -113,6 +114,15 @@ class wx_build_ext(orig_build_ext):
         # root, using the same EXT_SUFFIX that waf names its outputs with.
         src = self.get_ext_filename(ext.name)
         dst = self.get_ext_fullpath(ext.name)
+        if not os.path.exists(src) and sys.platform.startswith('win'):
+            # A --debug build: wscript's makeTargetName() adds '_d' to the
+            # module names, giving the names a debug Python imports. Copy it
+            # under that name.
+            suffix = sysconfig.get_config_var('EXT_SUFFIX')
+            debug_src = src[:-len(suffix)] + '_d' + suffix
+            if os.path.exists(debug_src):
+                src = debug_src
+                dst = os.path.join(os.path.dirname(dst), os.path.basename(src))
         if not os.path.exists(src):
             raise FileNotFoundError(
                 "Extension module {} has not been built (expected {}). "
