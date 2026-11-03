@@ -55,5 +55,9 @@ def load_module(moduleName, searchPath):
             raise ImportError("No module named %r" % moduleName, name=moduleName)
         module = importlib.util.module_from_spec(spec)
         sys.modules[moduleName] = module
-        spec.loader.exec_module(module)
+        try:
+            spec.loader.exec_module(module)
+        except BaseException:
+            sys.modules.pop(moduleName, None)
+            raise
         return module

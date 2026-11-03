@@ -173,7 +173,6 @@ def run():
     c.addPyMethod('DoDefaultTypeMappings', '(self)',
         doc="Add built-in properties to the map.",
         body="""\
-            import sys
             global _type2property
             if _type2property is not None:
                 return
