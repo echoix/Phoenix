@@ -78,6 +78,39 @@ def cacheFile():
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), "cmake", "wxpython.cmake")
 
 
+def _cacheStamp(buildDir):
+    return os.path.join(buildDir, ".wxpython-cache-stamp")
+
+
+def _cacheHash():
+    import hashlib
+    with open(cacheFile(), "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()
+
+
+def resetStaleCache(buildDir, force=False):
+    """
+    ``-C`` only sets cache entries that do not exist yet, so edits to the
+    static cache file would never reach an existing build tree.  Remember a
+    hash of it and start from a fresh CMakeCache.txt when it changed (or when
+    ``force`` is given).  Returns True if the cache was removed.
+    """
+    cache = os.path.join(buildDir, "CMakeCache.txt")
+    stamp = _cacheStamp(buildDir)
+    old = None
+    if os.path.exists(stamp):
+        with open(stamp) as f:
+            old = f.read().strip()
+    reset = False
+    if os.path.exists(cache) and (force or old != _cacheHash()):
+        os.remove(cache)
+        reset = True
+    if os.path.isdir(buildDir):
+        with open(stamp, "w") as f:
+            f.write(_cacheHash())
+    return reset
+
+
 def configureArgs(wxRoot, buildDir, *, msw, debug=False, wxpython=False,
                   cairo=False, no_msedge=False, no_dpi_aware=False, gtk2=False,
                   set_rpath_origin=False, prefix=None, generator=None,
@@ -114,13 +147,14 @@ def configureArgs(wxRoot, buildDir, *, msw, debug=False, wxpython=False,
     if prefix:
         D.append(("CMAKE_INSTALL_PREFIX", prefix))
 
+    # Every switch is passed explicitly, ON and OFF, because values from an
+    # earlier configure of the same build tree are kept in CMakeCache.txt.
     if msw:
-        if no_msedge:
-            D.append(("wxUSE_WEBVIEW_EDGE", "OFF"))
-        if no_dpi_aware:
-            D.append(("wxUSE_DPI_AWARE_MANIFEST", "none"))
+        if wxpython:
+            D.append(("wxUSE_WEBVIEW_EDGE", "OFF" if no_msedge else "ON"))
+            D.append(("wxUSE_DPI_AWARE_MANIFEST", "none" if no_dpi_aware else "per-monitor"))
+        D.append(("wxUSE_CAIRO", "ON" if cairo else "OFF"))
         if cairo:
-            D.append(("wxUSE_CAIRO", "ON"))
             # wx only needs the headers; the cairo DLL is loaded at runtime.
             # But its FindCairo module insists on both variables being set,
             # otherwise it silently turns wxUSE_CAIRO back off.
@@ -133,11 +167,12 @@ def configureArgs(wxRoot, buildDir, *, msw, debug=False, wxpython=False,
         elif sys.platform != "darwin":
             D.append(("wxBUILD_TOOLKIT", "gtk3"))
         if mac_arch:
+            if mac_arch == "default":
+                mac_arch = "arm64,x86_64"
             D.append(("CMAKE_OSX_ARCHITECTURES", mac_arch.replace(",", ";")))
-        if set_rpath_origin:
-            # Use only $ORIGIN, not the absolute build tree path as well.
-            D.append(("CMAKE_BUILD_WITH_INSTALL_RPATH", "ON"))
-            D.append(("CMAKE_INSTALL_RPATH", "$ORIGIN"))
+        # Use only $ORIGIN, not the absolute build tree path as well.
+        D.append(("CMAKE_BUILD_WITH_INSTALL_RPATH", _onoff(set_rpath_origin)))
+        D.append(("CMAKE_INSTALL_RPATH", "$ORIGIN" if set_rpath_origin else ""))
 
     for d in D:
         args.append("-D%s=%s" % d)

@@ -43,7 +43,7 @@ from buildtools.config  import Config, msg, opj, posixjoin, loadETG, etg2sip, fi
                                phoenixDir, wxDir, copyIfNewer, copyFile, \
                                macSetLoaderNames, \
                                getVcsRev, runcmd, getSipFiles, \
-                               getVisCVersion, getToolsPlatformName, updateLicenseFiles, \
+                               getToolsPlatformName, updateLicenseFiles, \
                                TemporaryDirectory, getMSVCInfo, generateVersionFiles
 
 import buildtools.version as version
@@ -530,6 +530,22 @@ class pushDir(object):
 
 def useAutoconf(options):
     return bool(options.autoconf or options.mac_framework)
+
+
+def warnIfOldAutoconfTree(options):
+    """
+    The CMake build uses its own build folder.  Tell people who still have an
+    autoconf tree from an earlier version where it went.
+    """
+    if isWindows or useAutoconf(options) or options.build_dir:
+        return
+    new = getBuildDir(options)
+    old = new[:-len('-cmake')]
+    if (os.path.exists(opj(old, 'config.status')) and
+            not os.path.exists(opj(new, 'CMakeCache.txt'))):
+        msg('NOTE: wxWidgets is now built with CMake in %s. The old autoconf build in\n'
+            '      %s is no longer used; run build_wx to build the new one, and delete\n'
+            '      the old folder when you no longer need it (or use --autoconf).' % (new, old))
 
 
 def getBuildDir(options):
@@ -1645,6 +1661,7 @@ def cmd_build_wx(options, args):
         msg("use_syswx option specified, skipping wxWidgets build")
         return
     checkCompiler()
+    warnIfOldAutoconfTree(options)
 
     build_options = ['--wxpython']
 
@@ -1732,9 +1749,11 @@ def cmd_build_wx(options, args):
         if options.autoconf:
             build_options.append('--autoconf')
         build_options.append('--builddir=%s' % BUILD_DIR)
+    if options.force_config:
+        build_options.append('--force_config')
 
     if options.extra_make:
-        build_options.append('--extra_make=%s' % shlex.quote(options.extra_make))
+        build_options.append('--extra_make=%s' % options.extra_make)
 
     if not isWindows and not isDarwin and not options.no_magic and not options.use_syswx:
         # Using $ORIGIN in the rpath will cause the dynamic linker to look
@@ -1857,6 +1876,7 @@ def cmd_build_py(options, args):
 
     waf = getWafCmd()
     checkCompiler()
+    warnIfOldAutoconfTree(options)
 
     BUILD_DIR = getBuildDir(options)
 
@@ -2067,8 +2087,9 @@ def cmd_install_wx(options, args):
     BUILD_DIR = getBuildDir(options)
     if not useAutoconf(options):
         destdir = 'DESTDIR="%s" ' % options.destdir if options.destdir else ''
-        runcmd('%scmake --install "%s" --config %s' % (
-            destdir, BUILD_DIR, 'Debug' if options.debug else 'Release'))
+        runcmd('%s"%s" --install "%s" --config %s' % (
+            destdir, os.environ.get('CMAKE', 'cmake'), BUILD_DIR,
+            'Debug' if options.debug else 'Release'))
         return
     DESTDIR = '' if not options.destdir else 'DESTDIR=' + options.destdir
     pwd = pushDir(BUILD_DIR)

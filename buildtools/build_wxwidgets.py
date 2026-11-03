@@ -221,6 +221,8 @@ def main_cmake(wxRootDir, options):
         print("ERROR: %s" % e)
         sys.exit(1)
     if not options.no_config:
+        if cmake_wx.resetStaleCache(buildDir, force=options.force_config):
+            print("Discarded the cached CMake configuration in " + buildDir)
         exitIfError(cmake_wx.run(cmake, cfg, env=env), "Error running cmake (configure)")
     if options.config_only:
         print("Exiting after configure")
@@ -258,8 +260,6 @@ def main(wxDir, args):
         contribDir = os.path.join(wxRootDir, "contrib", "build")
 
     # MSW is always built with CMake.  Elsewhere autoconf remains the default,
-    # CMake is opt-in via --cmake.
-    toolkit = "autoconf"
 
     defJobs = str(numCPUs())
     defFwPrefix = '/Library/Frameworks'
@@ -267,8 +267,8 @@ def main(wxDir, args):
     option_dict = {
         "clean"         : (False, "Clean all files from the build directory"),
         "debug"         : (False, "Build the library in debug symbols"),
-        "builddir"      : ("", "Directory where the build will be performed for autoconf builds."),
-        "prefix"        : ("", "Configured prefix to use for autoconf builds. Defaults to installdir if set. Ignored for framework builds."),
+        "builddir"      : ("", "Directory where the build will be performed."),
+        "prefix"        : ("", "Configured install prefix. Defaults to installdir if set. Ignored for framework builds."),
         "jobs"          : (defJobs, "Number of jobs to run at one time in make. Default: %s" % defJobs),
         "install"       : (False, "Install the toolkit to the installdir directory, or the default dir."),
         "installdir"    : ("", "Directory where built wxWidgets will be installed"),
@@ -281,7 +281,8 @@ def main(wxDir, args):
         "mac_framework_prefix"
                         : (defFwPrefix, "Prefix where the framework should be installed. Default: %s" % defFwPrefix),
         "cairo"         : (False, "Enable dynamically loading the Cairo lib for wxGraphicsContext on MSW"),
-        "no_config"     : (False, "Turn off configure step on autoconf builds"),
+        "no_config"     : (False, "Turn off the configure step"),
+        "force_config"  : (False, "CMake: discard the cached configuration and configure from scratch."),
         "config_only"   : (False, "Only run the configure step and then exit"),
         "rebake"        : (False, "Regenerate Bakefile and autoconf files"),
         "wxpython"      : (False, "Build the wxWidgets library with all options needed by wxPython"),
@@ -333,157 +334,156 @@ def main(wxDir, args):
     installDir = options.installdir
     prefixDir = options.prefix
 
-    if toolkit == "autoconf":
-        if not buildDir:
-            buildDir = os.getcwd()
-        configure_opts = []
-        if options.features != "":
-            configure_opts.extend(options.features.split(" "))
+    if not buildDir:
+        buildDir = os.getcwd()
+    configure_opts = []
+    if options.features != "":
+        configure_opts.extend(options.features.split(" "))
 
-        if options.debug:
-            configure_opts.append("--enable-debug")
+    if options.debug:
+        configure_opts.append("--enable-debug")
 
-        if options.osx_cocoa:
-            configure_opts.append("--with-osx_cocoa")
-        elif options.osx_carbon:
-            configure_opts.append("--with-osx_carbon")
+    if options.osx_cocoa:
+        configure_opts.append("--with-osx_cocoa")
+    elif options.osx_carbon:
+        configure_opts.append("--with-osx_carbon")
+
+    if options.gtk2:
+        options.gtk3 = False
+
+    if not sys.platform.startswith("darwin"):
+        if options.gtk3:
+            configure_opts.append("--with-gtk=3")
 
         if options.gtk2:
-            options.gtk3 = False
+            configure_opts.append("--with-gtk=2")
 
-        if not sys.platform.startswith("darwin"):
-            if options.gtk3:
-                configure_opts.append("--with-gtk=3")
+    wxpy_configure_opts = [
+                        "--enable-sound",
+                        "--enable-graphics_ctx",
+                        "--enable-display",
+                        "--enable-debug_flag",
+                        "--enable-optimise",
+                        "--disable-debugreport",
+                        "--enable-uiactionsim",
+                        "--enable-autoidman",
+                        ]
 
-            if options.gtk2:
-                configure_opts.append("--with-gtk=2")
+    if not sys.platform.startswith("darwin"):
+        wxpy_configure_opts.append("--with-sdl")
 
-        wxpy_configure_opts = [
-                            "--enable-sound",
-                            "--enable-graphics_ctx",
-                            "--enable-display",
-                            "--enable-debug_flag",
-                            "--enable-optimise",
-                            "--disable-debugreport",
-                            "--enable-uiactionsim",
-                            "--enable-autoidman",
-                            ]
+    if sys.platform.startswith("darwin"):
+        universalCapable = False
 
-        if not sys.platform.startswith("darwin"):
-            wxpy_configure_opts.append("--with-sdl")
+        # Set the minimum supported OSX version.
+        # TODO: Add a CLI option to set this.
+        wxpy_configure_opts.append("--with-macosx-version-min=10.10")
 
-        if sys.platform.startswith("darwin"):
-            universalCapable = False
+        # find the newest SDK available on this system
+        SDK = 'none found'
+        for xcodePath in getXcodePaths():
+            possibles = [(major, minor) for major in [10, 11, 12, 13, 14, 15, 26, 27] for minor in range(16)]
+            for major, minor in reversed(possibles):
+                sdk = os.path.join(xcodePath, "SDKs/MacOSX{}.{}.sdk".format(major, minor))
+                if os.path.exists(sdk):
+                    # Although we've found a SDK, we're not actually using
+                    # it at the moment. The builds seem to work better if we
+                    # let the compiler use whatever it considers to be the
+                    # default.
+                    # wxpy_configure_opts.append("--with-macosx-sdk=%s" % sdk)
+                    universalCapable = major >= 11
+                    SDK = sdk
+                    break
 
-            # Set the minimum supported OSX version.
-            # TODO: Add a CLI option to set this.
-            wxpy_configure_opts.append("--with-macosx-version-min=10.10")
-
-            # find the newest SDK available on this system
-            SDK = 'none found'
-            for xcodePath in getXcodePaths():
-                possibles = [(major, minor) for major in [10, 11, 12, 13, 14, 15, 26, 27] for minor in range(16)]
-                for major, minor in reversed(possibles):
-                    sdk = os.path.join(xcodePath, "SDKs/MacOSX{}.{}.sdk".format(major, minor))
-                    if os.path.exists(sdk):
-                        # Although we've found a SDK, we're not actually using
-                        # it at the moment. The builds seem to work better if we
-                        # let the compiler use whatever it considers to be the
-                        # default.
-                        # wxpy_configure_opts.append("--with-macosx-sdk=%s" % sdk)
-                        universalCapable = major >= 11
-                        SDK = sdk
-                        break
-
-            # Now cross check that if a universal build was requested that it's
-            # possible to do with the selected SDK.
-            arch = ''
-            if options.mac_universal_binary:
-                if options.mac_universal_binary == 'default':
-                    if universalCapable:
-                        arch = "arm64,x86_64"
-                    else:
-                        arch = "x86_64"
+        # Now cross check that if a universal build was requested that it's
+        # possible to do with the selected SDK.
+        arch = ''
+        if options.mac_universal_binary:
+            if options.mac_universal_binary == 'default':
+                if universalCapable:
+                    arch = "arm64,x86_64"
                 else:
-                    # otherwise assume the user knows what they are doing and just use what they gave us.
-                    arch = options.mac_universal_binary
-                configure_opts.append("--enable-universal_binary=%s" % arch)
+                    arch = "x86_64"
+            else:
+                # otherwise assume the user knows what they are doing and just use what they gave us.
+                arch = options.mac_universal_binary
+            configure_opts.append("--enable-universal_binary=%s" % arch)
 
-            # print("SDK Path:          {}".format(SDK))
-            print("Universal Capable: {}".format(universalCapable))
-            print("Architectures:     {}".format(arch))
+        # print("SDK Path:          {}".format(SDK))
+        print("Universal Capable: {}".format(universalCapable))
+        print("Architectures:     {}".format(arch))
 
-            wxpy_configure_opts.append("--with-libjpeg=builtin")
-            wxpy_configure_opts.append("--with-libpng=builtin")
-            wxpy_configure_opts.append("--with-libtiff=builtin")
-            wxpy_configure_opts.append("--with-libwebp=builtin")
-            wxpy_configure_opts.append("--with-regex=builtin")
-
-
-        if not options.mac_framework:
-            if installDir and not prefixDir:
-                prefixDir = installDir
-            if prefixDir:
-                prefixDir = os.path.abspath(prefixDir)
-                configure_opts.append("--prefix=" + prefixDir)
+        wxpy_configure_opts.append("--with-libjpeg=builtin")
+        wxpy_configure_opts.append("--with-libpng=builtin")
+        wxpy_configure_opts.append("--with-libtiff=builtin")
+        wxpy_configure_opts.append("--with-libwebp=builtin")
+        wxpy_configure_opts.append("--with-regex=builtin")
 
 
-        if options.wxpython:
-            configure_opts.extend(wxpy_configure_opts)
-            if options.debug:
-                # wxPython likes adding these debug options too
-                configure_opts.append("--enable-debug_gdb")
-                configure_opts.append("--disable-optimise")
-                configure_opts.remove("--enable-optimise")
-
-
-        if options.rebake:
-            retval = run("make -f autogen.mk")
-            exitIfError(retval, "Error running autogen.mk")
-
-        if options.mac_framework:
-            # TODO: Should options.install be automatically turned on if the
-            # mac_framework flag is given?
-
-            # framework builds always need to be monolithic
-            if not "--enable-monolithic" in configure_opts:
-                configure_opts.append("--enable-monolithic")
-
-            # The --prefix given to configure will be the framework prefix
-            # plus the framework specific dir structure.
-            prefixDir = getPrefixInFramework(options)
+    if not options.mac_framework:
+        if installDir and not prefixDir:
+            prefixDir = installDir
+        if prefixDir:
+            prefixDir = os.path.abspath(prefixDir)
             configure_opts.append("--prefix=" + prefixDir)
 
-            # the framework build adds symlinks above the installDir + prefixDir folder
-            # so we need to wipe from the framework root instead of inside the prefixDir.
-            frameworkRootDir = os.path.abspath(os.path.join(installDir + prefixDir, "..", ".."))
+
+    if options.wxpython:
+        configure_opts.extend(wxpy_configure_opts)
+        if options.debug:
+            # wxPython likes adding these debug options too
+            configure_opts.append("--enable-debug_gdb")
+            configure_opts.append("--disable-optimise")
+            configure_opts.remove("--enable-optimise")
+
+
+    if options.rebake:
+        retval = run("make -f autogen.mk")
+        exitIfError(retval, "Error running autogen.mk")
+
+    if options.mac_framework:
+        # TODO: Should options.install be automatically turned on if the
+        # mac_framework flag is given?
+
+        # framework builds always need to be monolithic
+        if not "--enable-monolithic" in configure_opts:
+            configure_opts.append("--enable-monolithic")
+
+        # The --prefix given to configure will be the framework prefix
+        # plus the framework specific dir structure.
+        prefixDir = getPrefixInFramework(options)
+        configure_opts.append("--prefix=" + prefixDir)
+
+        # the framework build adds symlinks above the installDir + prefixDir folder
+        # so we need to wipe from the framework root instead of inside the prefixDir.
+        frameworkRootDir = os.path.abspath(os.path.join(installDir + prefixDir, "..", ".."))
+        if os.path.exists(frameworkRootDir):
             if os.path.exists(frameworkRootDir):
-                if os.path.exists(frameworkRootDir):
-                    shutil.rmtree(frameworkRootDir)
+                shutil.rmtree(frameworkRootDir)
 
-        # Workaround OpenSUSE libdir issue by unsetting CONFIG_SITE envvar
-        env = None
-        if "CONFIG_SITE" in os.environ:
-            env = dict(os.environ)
-            del env["CONFIG_SITE"]
+    # Workaround OpenSUSE libdir issue by unsetting CONFIG_SITE envvar
+    env = None
+    if "CONFIG_SITE" in os.environ:
+        env = dict(os.environ)
+        del env["CONFIG_SITE"]
 
-        if options.set_rpath_origin:
-            configure_opts.append("--disable-rpath")
-            configure_opts.append(r"LDFLAGS='-Wl,-rpath,\$$ORIGIN'")
+    if options.set_rpath_origin:
+        configure_opts.append("--disable-rpath")
+        configure_opts.append(r"LDFLAGS='-Wl,-rpath,\$$ORIGIN'")
 
-        print("Configure options: " + repr(configure_opts))
-        wxBuilder = builder.AutoconfBuilder()
-        if not options.no_config and not options.clean:
-            olddir = os.getcwd()
-            if buildDir:
-                os.chdir(buildDir)
-            exitIfError(wxBuilder.configure(dir=wxRootDir, options=configure_opts, env=env),
-                        "Error running configure")
-            os.chdir(olddir)
+    print("Configure options: " + repr(configure_opts))
+    wxBuilder = builder.AutoconfBuilder()
+    if not options.no_config and not options.clean:
+        olddir = os.getcwd()
+        if buildDir:
+            os.chdir(buildDir)
+        exitIfError(wxBuilder.configure(dir=wxRootDir, options=configure_opts, env=env),
+                    "Error running configure")
+        os.chdir(olddir)
 
-        if options.config_only:
-            print("Exiting after configure")
-            return
+    if options.config_only:
+        print("Exiting after configure")
+        return
 
     if not wxBuilder:
         print("Builder not available for your specified platform/compiler.")
