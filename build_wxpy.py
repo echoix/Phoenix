@@ -529,7 +529,7 @@ class pushDir(object):
 
 
 def useAutoconf(options):
-    return bool(options.autoconf or options.mac_framework)
+    return bool(options.autoconf or (options.mac_framework and isDarwin))
 
 
 def warnIfOldAutoconfTree(options):
@@ -1682,6 +1682,8 @@ def cmd_build_wx(options, args):
 
         if options.jom:
             msg('WARNING: --jom is deprecated and ignored, the wxMSW build now uses CMake.')
+        if options.autoconf:
+            msg('WARNING: --autoconf is not available on Windows, ignoring.')
         build_options.append('--arch=%s' % getMSWSettings(options).dllArch)
 
     else:
@@ -1772,6 +1774,8 @@ def cmd_build_wx(options, args):
         # build again without the --debug flag?
         if isWindows and options.both:
             build_options.remove('--debug')
+            if '--force_config' in build_options:
+                build_options.remove('--force_config')  # the first pass already did it
             print('wxWidgets build options: ' + str(build_options))
             wxbuild.main(wxDir(), build_options)
 

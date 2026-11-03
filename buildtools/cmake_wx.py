@@ -88,27 +88,72 @@ def _cacheHash():
         return hashlib.sha256(f.read()).hexdigest()
 
 
-def resetStaleCache(buildDir, force=False):
+def cacheHomeDir(buildDir):
+    """The source dir a build tree was configured from (None if no CMakeCache.txt)."""
+    try:
+        with open(os.path.join(buildDir, "CMakeCache.txt"), encoding="utf-8", errors="replace") as f:
+            for line in f:
+                if line.startswith("CMAKE_HOME_DIRECTORY:"):
+                    return line.split("=", 1)[1].strip()
+    except OSError:
+        pass
+    return None
+
+
+def ownsBuildDir(buildDir, wxRoot):
+    """True if buildDir has a CMake cache that was configured from wxRoot."""
+    home = cacheHomeDir(buildDir)
+    return home is not None and os.path.realpath(home) == os.path.realpath(wxRoot)
+
+
+def resetStaleCache(buildDir, wxRoot, force=False):
     """
     ``-C`` only sets cache entries that do not exist yet, so edits to the
-    static cache file would never reach an existing build tree.  Remember a
-    hash of it and start from a fresh CMakeCache.txt when it changed (or when
+    static cache file would never reach an existing build tree.  Compare a
+    hash of the file with the one recorded by recordCache() after the last
+    successful configure, and remove the CMakeCache.txt if it changed (or if
     ``force`` is given).  Returns True if the cache was removed.
+
+    Raises ValueError rather than touching a cache that belongs to another
+    source tree.
     """
     cache = os.path.join(buildDir, "CMakeCache.txt")
-    stamp = _cacheStamp(buildDir)
+    if not os.path.exists(cache):
+        return False
+    if not ownsBuildDir(buildDir, wxRoot):
+        raise ValueError("%s holds a CMake build of something other than %s; "
+                         "use another build directory" % (buildDir, wxRoot))
     old = None
-    if os.path.exists(stamp):
-        with open(stamp) as f:
+    if os.path.exists(_cacheStamp(buildDir)):
+        with open(_cacheStamp(buildDir)) as f:
             old = f.read().strip()
-    reset = False
-    if os.path.exists(cache) and (force or old != _cacheHash()):
+    if force or old != _cacheHash():
         os.remove(cache)
-        reset = True
-    if os.path.isdir(buildDir):
-        with open(stamp, "w") as f:
-            f.write(_cacheHash())
-    return reset
+        return True
+    return False
+
+
+def recordCache(buildDir):
+    """Call after a successful configure."""
+    with open(_cacheStamp(buildDir), "w") as f:
+        f.write(_cacheHash())
+
+
+def cleanBuildDir(buildDir, wxRoot):
+    """
+    Delete a build tree, but only one that is recognisably ours.  Returns
+    True if something was removed.
+    """
+    if not os.path.isdir(buildDir):
+        return False
+    ours = ownsBuildDir(buildDir, wxRoot) or (
+        not os.path.exists(os.path.join(buildDir, "CMakeCache.txt")) and
+        os.path.basename(os.path.normpath(buildDir)).startswith(MSW_BUILD_PREFIX))
+    if not ours:
+        raise ValueError("%s doesn't look like a CMake build tree of %s, not removing it"
+                         % (buildDir, wxRoot))
+    shutil.rmtree(buildDir)
+    return True
 
 
 def configureArgs(wxRoot, buildDir, *, msw, debug=False, wxpython=False,
@@ -144,8 +189,14 @@ def configureArgs(wxRoot, buildDir, *, msw, debug=False, wxpython=False,
     # Single-config generators need the build type at configure time.
     # (Multi-config ones, like Visual Studio, ignore it and take --config.)
     D.append(("CMAKE_BUILD_TYPE", "Debug" if debug else "Release"))
+    # Values from an earlier configure of the same tree are kept in the
+    # cache, so the ones that are only sometimes wanted are removed with -U
+    # when they aren't.
+    U = []
     if prefix:
         D.append(("CMAKE_INSTALL_PREFIX", prefix))
+    else:
+        U.append("CMAKE_INSTALL_PREFIX")
 
     # Every switch is passed explicitly, ON and OFF, because values from an
     # earlier configure of the same build tree are kept in CMakeCache.txt.
@@ -170,10 +221,14 @@ def configureArgs(wxRoot, buildDir, *, msw, debug=False, wxpython=False,
             if mac_arch == "default":
                 mac_arch = "arm64,x86_64"
             D.append(("CMAKE_OSX_ARCHITECTURES", mac_arch.replace(",", ";")))
+        else:
+            U.append("CMAKE_OSX_ARCHITECTURES")
         # Use only $ORIGIN, not the absolute build tree path as well.
         D.append(("CMAKE_BUILD_WITH_INSTALL_RPATH", _onoff(set_rpath_origin)))
         D.append(("CMAKE_INSTALL_RPATH", "$ORIGIN" if set_rpath_origin else ""))
 
+    for u in U:
+        args.append("-U" + u)
     for d in D:
         args.append("-D%s=%s" % d)
 

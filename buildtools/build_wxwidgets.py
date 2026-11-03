@@ -194,9 +194,15 @@ def main_cmake(wxRootDir, options):
         buildDir = os.path.abspath(options.builddir or os.getcwd())
 
     if options.clean:
+        if not isMSW and not options.builddir:
+            print("ERROR: --clean needs an explicit --builddir.")
+            sys.exit(1)
         print("Performing cleanup of " + buildDir)
-        if os.path.isdir(buildDir):
-            shutil.rmtree(buildDir)
+        try:
+            cmake_wx.cleanBuildDir(buildDir, wxRootDir)
+        except ValueError as e:
+            print("ERROR: %s" % e)
+            sys.exit(1)
         return 0
 
     prefix = options.prefix or options.installdir or None
@@ -221,9 +227,22 @@ def main_cmake(wxRootDir, options):
         print("ERROR: %s" % e)
         sys.exit(1)
     if not options.no_config:
-        if cmake_wx.resetStaleCache(buildDir, force=options.force_config):
-            print("Discarded the cached CMake configuration in " + buildDir)
+        try:
+            if cmake_wx.resetStaleCache(buildDir, wxRootDir, force=options.force_config):
+                print("Discarded the cached CMake configuration in " + buildDir)
+        except ValueError as e:
+            print("ERROR: %s" % e)
+            sys.exit(1)
+        fresh = not os.path.exists(os.path.join(buildDir, "CMakeCache.txt"))
         exitIfError(cmake_wx.run(cmake, cfg, env=env), "Error running cmake (configure)")
+        if fresh:
+            # wxWidgets' CMake build only settles some of its feature
+            # detection (e.g. wxUSE_WEBVIEW_WEBKIT in setup.h) on the second
+            # configure of a tree.  Do it now so that the generated setup.h
+            # is final before anything is compiled; otherwise the next
+            # build would find setup.h changed and recompile everything.
+            exitIfError(cmake_wx.run(cmake, cfg, env=env), "Error running cmake (configure)")
+        cmake_wx.recordCache(buildDir)
     if options.config_only:
         print("Exiting after configure")
         return 0
@@ -233,6 +252,14 @@ def main_cmake(wxRootDir, options):
                     buildDir, debug=options.debug, jobs=None if isMSW and not options.generator else options.jobs,
                     extra=extra), env=env),
                 "Error building")
+
+    if isMSW and not os.path.isdir(cmake_wx.mswLibDir(wxRootDir, arch)):
+        # e.g. a non-Visual Studio generator under a compiler environment for
+        # another architecture than the one we were asked for.
+        print("ERROR: the build succeeded but %s was not created; the generator "
+              "probably built for a different architecture than %s."
+              % (cmake_wx.mswLibDir(wxRootDir, arch), arch))
+        sys.exit(1)
 
     if options.install:
         if options.installdir:
@@ -259,7 +286,8 @@ def main(wxDir, args):
     if sys.platform.startswith("win"):
         contribDir = os.path.join(wxRootDir, "contrib", "build")
 
-    # MSW is always built with CMake.  Elsewhere autoconf remains the default,
+    # wxWidgets is built with CMake everywhere; --autoconf is the deprecated
+    # alternative on Linux and macOS.
 
     defJobs = str(numCPUs())
     defFwPrefix = '/Library/Frameworks'
@@ -290,7 +318,7 @@ def main(wxDir, args):
         "osx_carbon"    : (False, "Build the Carbon port"),
         "shared"        : (False, "Build wx as a dynamic library"),
         "extra_make"    : ("", "Extra args to pass on to the underlying build tool's command line."),
-        "features"      : ("", "A comma-separated list of wxUSE_XYZ defines on Win, or a list of configure flags on unix."),
+        "features"      : ("", "Space separated extra CMake settings (wxUSE_XYZ=ON or -DNAME=value); with --autoconf, configure flags."),
         "verbose"       : (False, "Print commands as they are run, (to aid with debugging this script)"),
         "jom"           : (False, "DEPRECATED, ignored: MSW builds now use CMake (see --generator)."),
         "autoconf"      : (False, "DEPRECATED: use the legacy autoconf build instead of CMake (not on MSW). Implied by --mac_framework."),

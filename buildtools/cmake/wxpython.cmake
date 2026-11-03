@@ -25,6 +25,9 @@ set(wxUSE_AFM_FOR_POSTSCRIPT OFF CACHE BOOL "")
 set(wxUSE_IFF              ON  CACHE BOOL "")
 set(wxUSE_UIACTIONSIMULATOR ON CACHE BOOL "")
 set(wxUSE_DEBUGREPORT      OFF CACHE BOOL "")
+# wx.NewIdRef() relies on this; it is on by default for MSW only, but the
+# autoconf build always had --enable-autoidman.
+set(wxUSE_AUTOID_MANAGEMENT ON CACHE BOOL "")
 # These two are plain #cmakedefine01 variables in setup.h.in, not options.
 set(wxUSE_DATEPICKCTRL_GENERIC ON  CACHE BOOL "")
 set(wxDIALOG_UNIT_COMPATIBILITY OFF CACHE BOOL "")
