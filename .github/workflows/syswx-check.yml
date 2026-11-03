@@ -1,0 +1,107 @@
+# TEMPORARY: one-off check of PR #27 (setup.py ext_modules/build_ext change)
+# for --use_syswx builds. Lives only on the throwaway claude/syswx-check
+# branch; delete the branch when done.
+name: syswx-check
+
+on:
+  push:
+    branches: [ 'claude/syswx-check' ]
+
+permissions:
+  contents: read
+
+jobs:
+  syswx:
+    runs-on: ubuntu-24.04
+    env:
+      WXPREFIX: /home/runner/wxprefix
+      OLD_SETUP_REV: b4614edc47ae7e5b067952ea7b5d73aaeed6bc39  # PR #27's base
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0          # need the base commit's setup.py
+          filter: blob:none
+          persist-credentials: false
+
+      - name: Checkout submodules (partial clone)
+        run: git submodule update --init --recursive --filter=blob:none --jobs=4
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade --group build --group test
+
+      - name: Install Ubuntu dependencies
+        run: ./buildtools/install_depends.sh
+
+      - name: Build wxWidgets and install it under a prefix (the "system" wx)
+        run: |
+          python build_wxpy.py build_wx install_wx --no_magic --prefix=$WXPREFIX
+          ls $WXPREFIX/bin $WXPREFIX/lib | head -40
+          $WXPREFIX/bin/wx-config --version
+          echo "$WXPREFIX/bin" >> $GITHUB_PATH
+          echo "LD_LIBRARY_PATH=$WXPREFIX/lib" >> $GITHUB_ENV
+
+      - name: Build Phoenix against it with --use_syswx
+        run: |
+          python build_wxpy.py build_py --use_syswx --prefix=$WXPREFIX
+          echo "--- extension modules in wx/:"; ls wx/*.so wx/svg/*.so
+          echo "--- bundled wx libs in wx/ (expect none):"; ls wx/libwx* 2>/dev/null || echo none
+
+      - name: Package with this PR's setup.py
+        run: |
+          pip wheel --no-deps --no-build-isolation --config-settings=--build-option=--skip-build -w out-new .
+          rm -rf build
+          python build_wxpy.py install_py --use_syswx --destdir=$PWD/root-new
+          rm -rf build *.egg-info
+
+      - name: Package the same build with the old setup.py
+        run: |
+          cp setup.py setup.py.new
+          git show $OLD_SETUP_REV:setup.py > setup.py
+          pip wheel --no-deps --no-build-isolation --config-settings=--build-option=--skip-build -w out-old .
+          rm -rf build
+          python build_wxpy.py install_py --use_syswx --destdir=$PWD/root-old
+          rm -rf build *.egg-info
+          mv setup.py.new setup.py
+
+      - name: Compare
+        run: |
+          set +e; rc=0
+          ls out-old out-new
+          mkdir -p cmp/old cmp/new
+          unzip -q out-old/*.whl -d cmp/old
+          unzip -q out-new/*.whl -d cmp/new
+          echo "--- WHEEL (new):"; cat cmp/new/*.dist-info/WHEEL
+          echo "--- wheel: diff of everything except RECORD"
+          { diff -r -x RECORD cmp/old cmp/new && echo "WHEELS IDENTICAL (except RECORD)"; } || { echo "!! DIFFERENT"; rc=1; }
+          echo "--- extension modules in the new wheel:"; (cd cmp/new && ls wx/*.so wx/svg/*.so)
+          echo "--- bundled wx libs in the new wheel (expect none):"; (cd cmp/new && ls wx/libwx* 2>/dev/null || echo none)
+          echo "--- install_py trees"
+          (cd root-old && find . -type f -o -type l | sort) > old.txt
+          (cd root-new && find . -type f -o -type l | sort) > new.txt
+          { diff old.txt new.txt && echo "INSTALL FILE LISTS IDENTICAL ($(wc -l < new.txt) files)"; } || { echo "!! DIFFERENT"; rc=1; }
+          grep -c "site-packages/wx/" new.txt
+          { diff -r --no-dereference -x '__pycache__' root-old root-new && echo "INSTALL TREES IDENTICAL (excluding __pycache__)"; } || { echo "!! DIFFERENT"; rc=1; }
+          exit $rc
+
+      - name: Smoke test and unit tests against the installed wheel
+        env:
+          WXPY_TEST_XVFB: '1'
+        run: |
+          pip install out-new/*.whl
+          mv wx wx-built   # make sure the installed wheel is what gets imported
+          cd /tmp
+          python -c "import wx; print(wx.__file__); print(wx.version()); print(wx.PlatformInfo)"
+          for lib in adv aui dataview glcanvas grid html2 html media propgrid ribbon richtext siplib stc xml xrc svg; do
+            python -c "import wx.$lib" && echo "import wx.$lib OK"
+          done
+          ldd $(python -c "import wx, os; print(os.path.join(os.path.dirname(wx.__file__), [f for f in os.listdir(os.path.dirname(wx.__file__)) if f.startswith('_core.')][0]))") | grep libwx
+          cd $GITHUB_WORKSPACE
+          dbus-run-session -- xvfb-run -a python -m pytest unittests -q -p no:cacheprovider
