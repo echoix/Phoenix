@@ -14,7 +14,7 @@ import glob
 import stat
 import shutil
 
-from setuptools                     import setup
+from setuptools                     import setup, Distribution
 from setuptools.command.build       import build as orig_build
 from setuptools.command.build_py    import build_py as orig_build_py
 from setuptools.command.install     import install as orig_install
@@ -136,20 +136,15 @@ def _cleanup_symlinks(cmd):
                 pass
 
 
+class WxDistribution(Distribution):
+    # Let setuptools/bdist_wheel know that there really are extension modules
+    # in this build (so the wheel gets a platform tag), even though they are
+    # not built here.
+    def has_ext_modules(self):
+        return True
+
+
 class wx_bdist_wheel(orig_bdist_wheel):
-    def finalize_options(self):
-        # Do a bit of monkey-patching to let bdist_wheel know that there
-        # really are extension modules in this build, even though they are
-        # not built here.
-        def _has_ext_modules(self):
-            return True
-        from setuptools.dist import Distribution
-        #Distribution.is_pure = _is_pure
-        Distribution.has_ext_modules = _has_ext_modules
-
-        orig_bdist_wheel.finalize_options(self)
-
-
     def run(self):
         # Ensure that there is a basic library build for bdist_wheel to pull from.
         self.run_command("build")
@@ -261,4 +256,5 @@ if __name__ == '__main__':
           long_description = LONG_DESCRIPTION,
           long_description_content_type = 'text/x-rst',
           cmdclass         = CMDCLASS,
+          distclass        = WxDistribution,
         )
