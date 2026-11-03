@@ -156,14 +156,16 @@ class Configuration(object):
             # will probably vary...
             self.WXPLAT = '__WXMSW__'
 
-            if os.environ.get('CPU', None) in ['AMD64', 'X64', 'ARM64']:
-                arch_str = 'arm64' if os.environ['CPU'] == 'ARM64' else 'x64'
-                self.VCDLL = 'vc%s_%s_dll' % (getVisCVersion(), arch_str)
-            else:
-                self.VCDLL = 'vc%s_dll' % getVisCVersion()
+            # wxWidgets is built with CMake, which puts the libs and the
+            # generated setup.h in its own build tree.  build_wxpy.py always
+            # sets CPU on Windows, so this agrees with how build_wx chose it.
+            from buildtools import cmake_wx
+            self.MSWARCH = cmake_wx.mswArch()
+            self.VCDLL = os.path.basename(cmake_wx.mswLibDir(self.WXDIR, self.MSWARCH))
+            self.MSWLIBDIR = cmake_wx.mswLibDir(self.WXDIR, self.MSWARCH)
 
             self.includes += ['include',
-                              opj(self.WXDIR, 'lib', self.VCDLL, 'msw'  + self.libFlag()),
+                              opj(self.MSWLIBDIR, 'msw'  + self.libFlag()),
                               opj(self.WXDIR, 'include'),
                               opj(self.WXDIR, 'contrib', 'include'),
                               ]
@@ -180,7 +182,7 @@ class Configuration(object):
                                   ('wxUSE_DPI_AWARE_MANIFEST', '2') ]
 
             self.libs = []
-            self.libdirs = [ opj(self.WXDIR, 'lib', self.VCDLL) ]
+            self.libdirs = [ self.MSWLIBDIR ]
             if self.MONOLITHIC:
                 self.libs += makeLibName('')
             else:

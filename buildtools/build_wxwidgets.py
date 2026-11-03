@@ -12,11 +12,12 @@ import glob
 import optparse
 import platform
 import shutil
+import shlex
 import types
 import subprocess
 
 from buildtools import builder
-from buildtools.config import getVisCVersion
+from buildtools import cmake_wx
 
 # builder object
 wxBuilder = None
@@ -28,7 +29,6 @@ contribDir = None
 options = None
 configure_opts = None
 exitWithException = True
-nmakeCommand = 'nmake.exe'
 
 verbose = False
 
@@ -156,13 +156,97 @@ def getoutput(cmd):
     return output
 
 
+def main_cmake(wxRootDir, options):
+    """
+    Configure, build and (optionally) install wxWidgets using CMake.
+    """
+    isMSW = sys.platform.startswith("win")
+
+    if options.jom:
+        print("WARNING: --jom is deprecated and ignored, MSW builds now use CMake. "
+              "Use --generator=Ninja if you want a different build tool.")
+    if options.mac_framework:
+        print("ERROR: Framework builds are not supported by the CMake build, use autoconf.")
+        sys.exit(1)
+    cmake = cmake_wx.findCMake()
+    if not cmake:
+        print("ERROR: cmake was not found on the PATH. It is required to build wxWidgets here.\n"
+              "       Install it from https://cmake.org/download/ or with 'pip install cmake'.")
+        sys.exit(1)
+    ver = cmake_wx.cmakeVersion(cmake)
+    if ver is not None and ver < cmake_wx.CMAKE_MINIMUM:
+        print("ERROR: CMake %s is too old, need at least %s." % (
+            ".".join(map(str, ver)), ".".join(map(str, cmake_wx.CMAKE_MINIMUM))))
+        sys.exit(1)
+
+    if options.cairo and not os.environ.get("CAIRO_ROOT"):
+        print("WARNING: Expected CAIRO_ROOT set in the environment!")
+
+    env = dict(os.environ)
+    arch = None
+    if isMSW:
+        arch = options.arch or cmake_wx.mswArch()
+        buildDir = cmake_wx.mswBuildDir(wxRootDir, arch)
+        if options.cairo and os.environ.get("CAIRO_ROOT"):
+            # let find_package/pkg-config style lookups find it
+            env["CMAKE_PREFIX_PATH"] = os.pathsep.join(
+                filter(None, [os.environ["CAIRO_ROOT"], env.get("CMAKE_PREFIX_PATH")]))
+    else:
+        buildDir = os.path.abspath(options.builddir or os.getcwd())
+
+    if options.clean:
+        print("Performing cleanup of " + buildDir)
+        if os.path.isdir(buildDir):
+            shutil.rmtree(buildDir)
+        return 0
+
+    prefix = options.prefix or options.installdir or None
+    if prefix:
+        prefix = os.path.abspath(prefix)
+
+    features = shlex.split(options.features) if options.features else []
+    if (os.path.exists(os.path.join(buildDir, "config.status")) and
+            not os.path.exists(os.path.join(buildDir, "CMakeCache.txt"))):
+        print("ERROR: %s holds an autoconf build, not a CMake one. Use another --builddir or clean it." % buildDir)
+        sys.exit(1)
+    try:
+        cfg = cmake_wx.configureArgs(
+        wxRootDir, buildDir, msw=isMSW, debug=options.debug, shared=options.shared,
+        wxpython=options.wxpython,
+        cairo=(os.environ.get("CAIRO_ROOT", "") or True) if options.cairo else False, no_msedge=options.no_msedge,
+        no_dpi_aware=options.no_dpi_aware, gtk2=options.gtk2,
+        set_rpath_origin=options.set_rpath_origin, prefix=prefix,
+        generator=options.generator or None, arch=arch,
+        mac_arch=options.mac_universal_binary or None, features=features)
+    except ValueError as e:
+        print("ERROR: %s" % e)
+        sys.exit(1)
+    if not options.no_config:
+        exitIfError(cmake_wx.run(cmake, cfg, env=env), "Error running cmake (configure)")
+    if options.config_only:
+        print("Exiting after configure")
+        return 0
+
+    extra = shlex.split(options.extra_make) if options.extra_make else []
+    exitIfError(cmake_wx.run(cmake, cmake_wx.buildArgs(
+                    buildDir, debug=options.debug, jobs=None if isMSW and not options.generator else options.jobs,
+                    extra=extra), env=env),
+                "Error building")
+
+    if options.install:
+        if options.installdir:
+            env["DESTDIR"] = os.path.abspath(options.installdir)
+        exitIfError(cmake_wx.run(cmake, cmake_wx.installArgs(buildDir, debug=options.debug), env=env),
+                    "Error installing")
+    return 0
+
+
 def main(wxDir, args):
     global wxRootDir
     global contribDir
     global options
     global configure_opts
     global wxBuilder
-    global nmakeCommand
 
     wxRootDir = wxDir
 
@@ -174,10 +258,9 @@ def main(wxDir, args):
     if sys.platform.startswith("win"):
         contribDir = os.path.join(wxRootDir, "contrib", "build")
 
-    if sys.platform.startswith("win"):
-        toolkit = "msvc"
-    else:
-        toolkit = "autoconf"
+    # MSW is always built with CMake.  Elsewhere autoconf remains the default,
+    # CMake is opt-in via --cmake.
+    toolkit = "autoconf"
 
     defJobs = str(numCPUs())
     defFwPrefix = '/Library/Frameworks'
@@ -206,10 +289,13 @@ def main(wxDir, args):
         "osx_cocoa"     : (False, "Build the Cocoa port"),
         "osx_carbon"    : (False, "Build the Carbon port"),
         "shared"        : (False, "Build wx as a dynamic library"),
-        "extra_make"    : ("", "Extra args to pass on [n]make's command line."),
+        "extra_make"    : ("", "Extra args to pass on to the underlying build tool's command line."),
         "features"      : ("", "A comma-separated list of wxUSE_XYZ defines on Win, or a list of configure flags on unix."),
         "verbose"       : (False, "Print commands as they are run, (to aid with debugging this script)"),
-        "jom"           : (False, "Use jom.exe instead of nmake for MSW builds."),
+        "jom"           : (False, "DEPRECATED, ignored: MSW builds now use CMake (see --generator)."),
+        "cmake"         : (False, "Build with CMake instead of autoconf (always the case on MSW)."),
+        "generator"     : ("", "CMake generator to use (-G). Default: CMake's default, or $CMAKE_GENERATOR."),
+        "arch"          : ("", "MSW only: x64, arm64 or x86. Default: derived from the environment."),
         "no_dpi_aware"  : (False, "Don't use the DPI_AWARE_MANIFEST."),
         "no_msedge"     : (False, "Do not include the MS Edge backend for wx.html2.WebView. (Windows only)"),
         "set_rpath_origin"
@@ -231,6 +317,9 @@ def main(wxDir, args):
     global verbose
     if options.verbose:
         verbose = True
+
+    if sys.platform.startswith("win") or options.cmake:
+        return main_cmake(wxRootDir, options)
 
     # compiler / build system specific args
     buildDir = options.builddir
@@ -389,97 +478,6 @@ def main(wxDir, args):
         if options.config_only:
             print("Exiting after configure")
             return
-
-    elif toolkit in ["msvc", "msvcProject"]:
-        flags = {}
-        buildDir = os.path.abspath(os.path.join(wxRootDir, "build", "msw"))
-
-        print("Updating wx/msw/setup.h")
-
-        if options.cairo:
-            if not os.environ.get("CAIRO_ROOT"):
-                print("WARNING: Expected CAIRO_ROOT set in the environment!")
-            flags["wxUSE_CAIRO"] = "1"
-
-        if options.wxpython:
-            flags["wxDIALOG_UNIT_COMPATIBILITY "] = "0"
-            flags["wxUSE_DEBUGREPORT"] = "0"
-            flags["wxUSE_DIALUP_MANAGER"] = "0"
-            flags["wxUSE_GRAPHICS_CONTEXT"] = "1"
-            flags["wxUSE_DISPLAY"] = "1"
-            flags["wxUSE_GLCANVAS"] = "1"
-            flags["wxUSE_POSTSCRIPT"] = "1"
-            flags["wxUSE_AFM_FOR_POSTSCRIPT"] = "0"
-            flags["wxUSE_DATEPICKCTRL_GENERIC"] = "1"
-            flags["wxUSE_IFF"] = "1"
-            flags["wxUSE_ACCESSIBILITY"] = "1"
-            flags["wxUSE_WINRT"] = "0"
-            flags["wxUSE_UIACTIONSIMULATOR"] = "1"
-            if not options.no_msedge:
-                flags["wxUSE_WEBVIEW_EDGE"] = "1"
-
-
-        mswIncludeDir = os.path.join(wxRootDir, "include", "wx", "msw")
-        setupFile = os.path.join(mswIncludeDir, "setup.h")
-        with open(setupFile, "rb") as f:
-            setupText = f.read()
-            setupText = setupText.decode('utf-8')
-
-        for flag in flags:
-            setupText, subsMade = re.subn(flag + r"\s+?\d", "%s %s" % (flag, flags[flag]), setupText)
-            if subsMade == 0:
-                print("Flag %s wasn't found in setup.h!" % flag)
-                sys.exit(1)
-
-        with open(setupFile, "wb") as f:
-            setupText = setupText.encode('utf-8')
-            f.write(setupText)
-
-        args = []
-        if toolkit == "msvc":
-            print("setting build options...")
-            args.append("-f makefile.vc")
-
-            if options.wxpython:
-                args.append("OFFICIAL_BUILD=1")
-                args.append("COMPILER_VERSION=%s" % getVisCVersion())
-                args.append("SHARED=1")
-                args.append("MONOLITHIC=0")
-                args.append("USE_OPENGL=1")
-                args.append("USE_GDIPLUS=1")
-
-                if not options.debug:
-                    args.append("BUILD=release")
-                else:
-                    args.append("BUILD=debug")
-
-            if options.shared:
-                args.append("SHARED=1")
-
-            if options.cairo:
-                args.append(
-                    "CPPFLAGS=/I%s" %
-                     os.path.join(os.environ.get("CAIRO_ROOT", ""), 'include\\cairo'))
-
-            if options.jom:
-                nmakeCommand = 'jom.exe'
-
-            if options.no_dpi_aware:
-                args.append("USE_DPI_AWARE_MANIFEST=0")
-
-
-            wxBuilder = builder.MSVCBuilder(commandName=nmakeCommand)
-
-        if toolkit == "msvcProject":
-            args = []
-            if options.shared or options.wxpython:
-                args.append("wx_dll.dsw")
-            else:
-                args.append("wx.dsw")
-
-            # TODO:
-            wxBuilder = builder.MSVCProjectBuilder()
-
 
     if not wxBuilder:
         print("Builder not available for your specified platform/compiler.")

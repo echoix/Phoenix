@@ -394,12 +394,12 @@ def getMSWSettings(options):
         pass
     msw = MSWsettings()
     msw.CPU = os.environ.get('CPU')
-    if msw.CPU in ['AMD64', 'X64', 'ARM64'] or PYTHON_ARCH == '64bit':
-        msw.dllArch = 'arm64' if msw.CPU == 'ARM64' else 'x64'
-        msw.dllDir = posixjoin(wxDir(), "lib", "vc%s_%s_dll" % (getVisCVersion(), msw.dllArch))
-    else:
-        msw.dllDir = posixjoin(wxDir(), "lib", "vc%s_dll" % getVisCVersion())
-    msw.buildDir = posixjoin(wxDir(), "build", "msw")
+    from buildtools import cmake_wx
+    msw.dllArch = cmake_wx.mswArch(msw.CPU, PYTHON_ARCH == '64bit')
+    # wxWidgets is built with CMake, out of tree.  Its DLLs, import libs and
+    # generated setup.h all end up below this folder.
+    msw.buildDir = cmake_wx.mswBuildDir(wxDir(), msw.dllArch)
+    msw.dllDir = cmake_wx.mswLibDir(wxDir(), msw.dllArch)
 
     msw.dll_type = "u"
     if options.debug:
@@ -454,7 +454,9 @@ def makeOptionParser():
         ("upload",         (False, "Upload bdist and/or sdist packages to snapshot server.")),
         ("cairo",          (False, "Allow Cairo use with wxGraphicsContext (Windows only)")),
         ("x64",            (False, "Use and build for the 64bit version of Python on Windows")),
-        ("jom",            (False, "Use jom instead of nmake for the wxMSW build")),
+        ("jom",            (False, "DEPRECATED and ignored: the wxMSW build now uses CMake.")),
+        ("generator",      ("",    "CMake generator for the wxWidgets build (-G), e.g. Ninja. Default: CMake's default.")),
+        ("cmake_wx",       (False, "Build wxWidgets with CMake instead of autoconf on non-MSW platforms (experimental).")),
         ("pytest_timeout", ("",    "Timeout, in seconds, for stopping stuck test cases. Overrides the default set in pyproject.toml; use 0 to disable.")),
         ("pytest_jobs",    ("",    "Number of parallel processes py.test should run. Overrides the default (auto) set in pyproject.toml.")),
         ("docker_img",     ("all", "Comma separated list of image tags to use for the build_docker command. Defaults to \"all\"")),
@@ -531,6 +533,9 @@ def getBuildDir(options):
         BUILD_DIR = opj(phoenixDir(), 'build', 'wxbld', 'gtk3' if options.gtk3 else 'gtk2')
     else:
         BUILD_DIR = opj(phoenixDir(), 'build', 'wxbld')
+    if options.cmake_wx and not isWindows:
+        # An autoconf and a CMake build tree must never share a folder.
+        BUILD_DIR += '-cmake'
     if options.build_dir:
         BUILD_DIR = os.path.abspath(options.build_dir)
     return BUILD_DIR
@@ -1655,7 +1660,8 @@ def cmd_build_wx(options, args):
             os.environ['CAIRO_ROOT'] = cairo_root
 
         if options.jom:
-            build_options.append('--jom')
+            msg('WARNING: --jom is deprecated and ignored, the wxMSW build now uses CMake.')
+        build_options.append('--arch=%s' % getMSWSettings(options).dllArch)
 
     else:
         # Platform is something other than MSW
@@ -1682,7 +1688,7 @@ def cmd_build_wx(options, args):
 
         if options.no_config:
             build_options.append('--no_config')
-        elif not options.force_config:
+        elif not options.force_config and not options.cmake_wx:
             dependencies = [ os.path.join(wxDir(), 'Makefile.in'),
                              os.path.join(wxDir(), 'configure'),
                              os.path.join(wxDir(), 'setup.h.in'),
@@ -1716,8 +1722,14 @@ def cmd_build_wx(options, args):
     if options.debug or (isWindows and options.both):
         build_options.append('--debug')
 
+    if options.generator:
+        build_options.append('--generator=%s' % options.generator)
+    if options.cmake_wx and not isWindows:
+        build_options.append('--cmake')
+        build_options.append('--builddir=%s' % BUILD_DIR)
+
     if options.extra_make:
-        build_options.append('--extra_make="%s"' % options.extra_make)
+        build_options.append('--extra_make=%s' % shlex.quote(options.extra_make))
 
     if not isWindows and not isDarwin and not options.no_magic and not options.use_syswx:
         # Using $ORIGIN in the rpath will cause the dynamic linker to look
@@ -2106,22 +2118,9 @@ def cmd_egg_info(options, args, egg_base=None):
 def cmd_clean_wx(options, args):
     cmdTimer = CommandTimer('clean_wx')
     if isWindows:
-        if options.both:
-            options.debug = True
+        # Both configs live in the same CMake build tree, so it all goes.
         msw = getMSWSettings(options)
-        deleteIfExists(opj(msw.dllDir, 'msw'+msw.dll_type))
-        delFiles(sorted(glob.glob(opj(msw.dllDir, 'wx*%s%s*' % (wxversion2_nodot, msw.dll_type)))))
-        delFiles(sorted(glob.glob(opj(msw.dllDir, 'wx*%s%s*' % (wxversion3_nodot, msw.dll_type)))))
-        if PYTHON_ARCH == '64bit':
-            deleteIfExists(opj(msw.buildDir, 'vc%s_%s_msw%sdll' % (getVisCVersion(), msw.dllArch, msw.dll_type)))
-        else:
-            deleteIfExists(opj(msw.buildDir, 'vc%s_msw%sdll' % (getVisCVersion(), msw.dll_type)))
-
-        if options.both:
-            options.debug = False
-            options.both = False
-            cmd_clean_wx(options, args)
-            options.both = True
+        deleteIfExists(msw.buildDir)
     else:
         BUILD_DIR = getBuildDir(options)
         deleteIfExists(BUILD_DIR)

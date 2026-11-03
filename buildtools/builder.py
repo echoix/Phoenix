@@ -198,54 +198,7 @@ class AutoconfBuilder(GNUMakeBuilder):
         return result.returncode
 
 
-class MSVCBuilder(Builder):
-    def __init__(self, commandName="nmake.exe"):
-        Builder.__init__(self, commandName=commandName, formatName="msvc")
-
-    def isAvailable(self):
-        PATH = os.environ['PATH'].split(os.path.pathsep)
-        for p in PATH:
-            if os.path.exists(os.path.join(p, self.name)):
-                return True
-        return False
-
-    def getProjectFileArg(self, projectFile = None):
-        result = []
-        if projectFile:
-            result.extend(['-f', projectFile])
-
-        return result
-
-
-class MSVCProjectBuilder(Builder):
-    def __init__(self):
-        Builder.__init__(self, commandName="VCExpress.exe", formatName="msvcProject")
-        for key in ["VS90COMNTOOLS", "VC80COMNTOOLS", "VC71COMNTOOLS"]:
-            if os.environ.has_key(key):
-                self.programDir = os.path.join(os.environ[key], "..", "IDE")
-
-        if self.programDir is None:
-            for version in ["9.0", "8", ".NET 2003"]:
-                msvcDir = "C:\\Program Files\\Microsoft Visual Studio %s\\Common7\\IDE" % version
-                if os.path.exists(msvcDir):
-                    self.programDir = msvcDir
-
-    def isAvailable(self):
-        if self.programDir:
-            path = os.path.join(self.programDir, self.name)
-            if os.path.exists(path):
-                return True
-            else:
-                # I don't have commercial versions of MSVC so I can't test this
-                name = "devenv.com"
-                path = os.path.join(self.programDir, name)
-                if os.path.exists(path):
-                    self.name = "devenv.com"
-                    return True
-
-        return False
-
-builders = [GNUMakeBuilder, XcodeBuilder, AutoconfBuilder, MSVCBuilder, MSVCProjectBuilder]
+builders = [GNUMakeBuilder, XcodeBuilder, AutoconfBuilder]
 
 def getAvailableBuilders():
     availableBuilders = {}
