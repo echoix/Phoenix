@@ -163,11 +163,8 @@ def main_cmake(wxRootDir, options):
     isMSW = sys.platform.startswith("win")
 
     if options.jom:
-        print("WARNING: --jom is deprecated and ignored, MSW builds now use CMake. "
+        print("WARNING: --jom is deprecated and ignored, wxWidgets is now built with CMake. "
               "Use --generator=Ninja if you want a different build tool.")
-    if options.mac_framework:
-        print("ERROR: Framework builds are not supported by the CMake build, use autoconf.")
-        sys.exit(1)
     cmake = cmake_wx.findCMake()
     if not cmake:
         print("ERROR: cmake was not found on the PATH. It is required to build wxWidgets here.\n"
@@ -184,6 +181,8 @@ def main_cmake(wxRootDir, options):
 
     env = dict(os.environ)
     arch = None
+    if options.cairo and not isMSW:
+        print("WARNING: --cairo only applies to MSW builds, ignoring.")
     if isMSW:
         arch = options.arch or cmake_wx.mswArch()
         buildDir = cmake_wx.mswBuildDir(wxRootDir, arch)
@@ -293,7 +292,7 @@ def main(wxDir, args):
         "features"      : ("", "A comma-separated list of wxUSE_XYZ defines on Win, or a list of configure flags on unix."),
         "verbose"       : (False, "Print commands as they are run, (to aid with debugging this script)"),
         "jom"           : (False, "DEPRECATED, ignored: MSW builds now use CMake (see --generator)."),
-        "cmake"         : (False, "Build with CMake instead of autoconf (always the case on MSW)."),
+        "autoconf"      : (False, "DEPRECATED: use the legacy autoconf build instead of CMake (not on MSW). Implied by --mac_framework."),
         "generator"     : ("", "CMake generator to use (-G). Default: CMake's default, or $CMAKE_GENERATOR."),
         "arch"          : ("", "MSW only: x64, arm64 or x86. Default: derived from the environment."),
         "no_dpi_aware"  : (False, "Don't use the DPI_AWARE_MANIFEST."),
@@ -318,8 +317,15 @@ def main(wxDir, args):
     if options.verbose:
         verbose = True
 
-    if sys.platform.startswith("win") or options.cmake:
+    if options.mac_framework and not options.autoconf:
+        print("NOTE: framework builds are not supported by the CMake build, using autoconf.")
+        options.autoconf = True
+    if sys.platform.startswith("win") and options.autoconf:
+        print("ERROR: --autoconf can't be used on Windows.")
+        sys.exit(1)
+    if not options.autoconf:
         return main_cmake(wxRootDir, options)
+    print("WARNING: the autoconf build is deprecated, wxWidgets is now built with CMake by default.")
 
     # compiler / build system specific args
     buildDir = options.builddir

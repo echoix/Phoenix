@@ -456,7 +456,7 @@ def makeOptionParser():
         ("x64",            (False, "Use and build for the 64bit version of Python on Windows")),
         ("jom",            (False, "DEPRECATED and ignored: the wxMSW build now uses CMake.")),
         ("generator",      ("",    "CMake generator for the wxWidgets build (-G), e.g. Ninja. Default: CMake's default.")),
-        ("cmake_wx",       (False, "Build wxWidgets with CMake instead of autoconf on non-MSW platforms (experimental).")),
+        ("autoconf",       (False, "DEPRECATED: build wxWidgets with its autoconf build instead of CMake (not on MSW; implied by --mac_framework).")),
         ("pytest_timeout", ("",    "Timeout, in seconds, for stopping stuck test cases. Overrides the default set in pyproject.toml; use 0 to disable.")),
         ("pytest_jobs",    ("",    "Number of parallel processes py.test should run. Overrides the default (auto) set in pyproject.toml.")),
         ("docker_img",     ("all", "Comma separated list of image tags to use for the build_docker command. Defaults to \"all\"")),
@@ -528,12 +528,16 @@ class pushDir(object):
         os.chdir(self.cwd)
 
 
+def useAutoconf(options):
+    return bool(options.autoconf or options.mac_framework)
+
+
 def getBuildDir(options):
     if not isDarwin and not isWindows:
         BUILD_DIR = opj(phoenixDir(), 'build', 'wxbld', 'gtk3' if options.gtk3 else 'gtk2')
     else:
         BUILD_DIR = opj(phoenixDir(), 'build', 'wxbld')
-    if options.cmake_wx and not isWindows:
+    if not isWindows and not useAutoconf(options):
         # An autoconf and a CMake build tree must never share a folder.
         BUILD_DIR += '-cmake'
     if options.build_dir:
@@ -1688,7 +1692,7 @@ def cmd_build_wx(options, args):
 
         if options.no_config:
             build_options.append('--no_config')
-        elif not options.force_config and not options.cmake_wx:
+        elif not options.force_config and useAutoconf(options):
             dependencies = [ os.path.join(wxDir(), 'Makefile.in'),
                              os.path.join(wxDir(), 'configure'),
                              os.path.join(wxDir(), 'setup.h.in'),
@@ -1724,8 +1728,9 @@ def cmd_build_wx(options, args):
 
     if options.generator:
         build_options.append('--generator=%s' % options.generator)
-    if options.cmake_wx and not isWindows:
-        build_options.append('--cmake')
+    if not isWindows:
+        if options.autoconf:
+            build_options.append('--autoconf')
         build_options.append('--builddir=%s' % BUILD_DIR)
 
     if options.extra_make:
@@ -2058,8 +2063,13 @@ def cmd_install_wx(options, args):
         msg('Magic is in use, wxWidgets will be installed with wxPython')
         return
 
-    # Otherwise, run 'make install' in the wx build folder
+    # Otherwise, install from the wx build folder
     BUILD_DIR = getBuildDir(options)
+    if not useAutoconf(options):
+        destdir = 'DESTDIR="%s" ' % options.destdir if options.destdir else ''
+        runcmd('%scmake --install "%s" --config %s' % (
+            destdir, BUILD_DIR, 'Debug' if options.debug else 'Release'))
+        return
     DESTDIR = '' if not options.destdir else 'DESTDIR=' + options.destdir
     pwd = pushDir(BUILD_DIR)
     runcmd("make install %s %s" % (DESTDIR, options.extra_make))

@@ -73,18 +73,25 @@ def _onoff(value):
     return "ON" if value else "OFF"
 
 
-def configureArgs(wxRoot, buildDir, *, msw, debug=False, shared=True,
-                  wxpython=False, cairo=False, no_msedge=False,
-                  no_dpi_aware=False, gtk2=False, set_rpath_origin=False,
-                  prefix=None, generator=None, arch=None, mac_arch=None,
-                  features=()):
+def cacheFile():
+    """The static initial cache holding the settings every wxPython build shares."""
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "cmake", "wxpython.cmake")
+
+
+def configureArgs(wxRoot, buildDir, *, msw, debug=False, wxpython=False,
+                  cairo=False, no_msedge=False, no_dpi_aware=False, gtk2=False,
+                  set_rpath_origin=False, prefix=None, generator=None,
+                  arch=None, mac_arch=None, features=(), shared=True):
     """
     Build the ``cmake`` configure command line (as a list).
 
-    The wxpython flag turns on the same set of features that the old
-    setup.h patching / ./configure options did.
+    The fixed wxPython feature set is in buildtools/cmake/wxpython.cmake and
+    is loaded with -C.  Only what varies from build to build is given as -D
+    here (command line values win over the initial cache).
     """
     args = ["-S", wxRoot, "-B", buildDir]
+    if wxpython:
+        args += ["-C", cacheFile()]
     if generator:
         args += ["-G", generator]
     effective_gen = generator or os.environ.get("CMAKE_GENERATOR") or ""
@@ -99,46 +106,32 @@ def configureArgs(wxRoot, buildDir, *, msw, debug=False, shared=True,
         args += ["-A", {"x64": "x64", "arm64": "ARM64", "x86": "Win32"}[arch]]
 
     D = []
-    D.append(("wxBUILD_SHARED", _onoff(shared or wxpython)))
-    D.append(("wxBUILD_MONOLITHIC", "OFF"))
-    D.append(("wxBUILD_SAMPLES", "OFF"))
-    D.append(("wxBUILD_TESTS", "OFF"))
-    D.append(("wxBUILD_DEMOS", "OFF"))
-    # Single-config generators need to know the build type at configure time.
+    if not wxpython:
+        D.append(("wxBUILD_SHARED", _onoff(shared)))
+    # Single-config generators need the build type at configure time.
     # (Multi-config ones, like Visual Studio, ignore it and take --config.)
     D.append(("CMAKE_BUILD_TYPE", "Debug" if debug else "Release"))
-    if msw:
-        # Keep debug info in release builds, as makefile.vc's DEBUG_INFO=1
-        # did, so --relwithdebug produces useful PDBs.
-        for lang in ("C", "CXX"):
-            D.append(("CMAKE_%s_FLAGS_RELEASE" % lang, "/O2 /Ob2 /DNDEBUG /Zi"))
     if prefix:
         D.append(("CMAKE_INSTALL_PREFIX", prefix))
 
     if msw:
-        D.append(("wxBUILD_VENDOR", ""))  # no "_custom" in the DLL names
-        D.append(("wxBUILD_MSVC_MULTIPROC", "ON"))
-        D.append(("wxUSE_DPI_AWARE_MANIFEST", "none" if no_dpi_aware else "per-monitor"))
-        D.append(("wxUSE_CAIRO", _onoff(bool(cairo))))
+        if no_msedge:
+            D.append(("wxUSE_WEBVIEW_EDGE", "OFF"))
+        if no_dpi_aware:
+            D.append(("wxUSE_DPI_AWARE_MANIFEST", "none"))
         if cairo:
+            D.append(("wxUSE_CAIRO", "ON"))
             # wx only needs the headers; the cairo DLL is loaded at runtime.
             # But its FindCairo module insists on both variables being set,
             # otherwise it silently turns wxUSE_CAIRO back off.
             root = cairo if isinstance(cairo, str) else ""
             D.append(("CAIRO_INCLUDE_DIRS", os.path.join(root, "include", "cairo")))
             D.append(("CAIRO_LIBRARIES", os.path.join(root, "lib", "cairo-placeholder.lib")))
-        if wxpython:
-            D.append(("wxUSE_WINRT", "OFF"))
-            D.append(("wxUSE_WEBVIEW_EDGE", _onoff(not no_msedge)))
-            D.append(("wxUSE_ACCESSIBILITY", "ON"))
-            D.append(("wxUSE_DIALUP_MANAGER", "OFF"))
-            D.append(("wxUSE_DATEPICKCTRL_GENERIC", "ON"))
-            D.append(("wxDIALOG_UNIT_COMPATIBILITY", "OFF"))
     else:
-        if sys.platform == "darwin":
-            D.append(("wxBUILD_TOOLKIT", "osx_cocoa"))
-        else:
-            D.append(("wxBUILD_TOOLKIT", "gtk2" if gtk2 else "gtk3"))
+        if gtk2:
+            D.append(("wxBUILD_TOOLKIT", "gtk2"))
+        elif sys.platform != "darwin":
+            D.append(("wxBUILD_TOOLKIT", "gtk3"))
         if mac_arch:
             D.append(("CMAKE_OSX_ARCHITECTURES", mac_arch.replace(",", ";")))
         if set_rpath_origin:
@@ -146,21 +139,10 @@ def configureArgs(wxRoot, buildDir, *, msw, debug=False, shared=True,
             D.append(("CMAKE_BUILD_WITH_INSTALL_RPATH", "ON"))
             D.append(("CMAKE_INSTALL_RPATH", "$ORIGIN"))
 
-    if wxpython:
-        D.append(("wxBUILD_PRECOMP", "ON"))
-        D.append(("wxUSE_GRAPHICS_CONTEXT", "ON"))
-        D.append(("wxUSE_DISPLAY", "ON"))
-        D.append(("wxUSE_OPENGL", "ON"))  # wxUSE_GLCANVAS follows, or is switched off if GL isn't found
-        D.append(("wxUSE_POSTSCRIPT", "ON"))
-        D.append(("wxUSE_AFM_FOR_POSTSCRIPT", "OFF"))
-        D.append(("wxUSE_IFF", "ON"))
-        D.append(("wxUSE_UIACTIONSIMULATOR", "ON"))
-        D.append(("wxUSE_DEBUGREPORT", "OFF"))
-
     for d in D:
         args.append("-D%s=%s" % d)
 
-    # Free-form extras: "wxUSE_FOO=ON" / "-DFOO=bar" / "FOO=bar"
+    # Free-form extras: "wxUSE_FOO=ON" / "-DFOO=bar"
     for feat in features:
         feat = feat.strip()
         if not feat:
@@ -168,10 +150,7 @@ def configureArgs(wxRoot, buildDir, *, msw, debug=False, shared=True,
         if feat.startswith("--"):
             raise ValueError("%r looks like an autoconf option; with CMake give wxUSE_XXX=ON/OFF "
                              "or -DNAME=value" % feat)
-        if feat.startswith("-D"):
-            args.append(feat)
-        else:
-            args.append("-D" + feat)
+        args.append(feat if feat.startswith("-D") else "-D" + feat)
     return args
 
 

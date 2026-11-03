@@ -43,22 +43,32 @@ class MswConfigureTests(unittest.TestCase):
         kw.setdefault("arch", "x64")
         return cmake_wx.configureArgs("src", "bld", **kw)
 
-    def test_wxpython_features(self):
-        d = defs(self.cfg())
+    def test_static_cache_file(self):
+        a = self.cfg()
+        self.assertEqual(a[a.index("-C") + 1], cmake_wx.cacheFile())
+        self.assertTrue(os.path.exists(cmake_wx.cacheFile()))
+        self.assertNotIn("-C", self.cfg(wxpython=False))
+
+    def test_cache_file_contents(self):
+        # The feature set wxPython needs is plain data in the cache file.
+        import re
+        cache = dict(re.findall(r'^\s*set\((\w+)\s+("[^"]*"|[^\s)]+)\s+CACHE',
+                                open(cmake_wx.cacheFile()).read(), re.M))
         for k, v in dict(wxBUILD_SHARED="ON", wxBUILD_MONOLITHIC="OFF",
                          wxUSE_GRAPHICS_CONTEXT="ON", wxUSE_OPENGL="ON",
                          wxUSE_DEBUGREPORT="OFF", wxUSE_WINRT="OFF",
                          wxUSE_WEBVIEW_EDGE="ON", wxUSE_ACCESSIBILITY="ON",
-                         wxUSE_DATEPICKCTRL_GENERIC="ON",
-                         wxUSE_UIACTIONSIMULATOR="ON", wxUSE_IFF="ON",
-                         wxUSE_DPI_AWARE_MANIFEST="per-monitor",
-                         wxBUILD_VENDOR="", CMAKE_BUILD_TYPE="Release").items():
-            self.assertEqual(d.get(k), v, k)
+                         wxUSE_DATEPICKCTRL_GENERIC="ON", wxUSE_UIACTIONSIMULATOR="ON",
+                         wxUSE_IFF="ON", wxUSE_DPI_AWARE_MANIFEST='"per-monitor"',
+                         wxBUILD_VENDOR='""').items():
+            self.assertEqual(cache.get(k), v, k)
+        self.assertIn("/Zi", cache["CMAKE_CXX_FLAGS_RELEASE"])
 
     def test_options(self):
         d = defs(self.cfg(no_msedge=True, no_dpi_aware=True, debug=True, cairo=True))
         self.assertEqual(d["wxUSE_WEBVIEW_EDGE"], "OFF")
         self.assertEqual(d["wxUSE_DPI_AWARE_MANIFEST"], "none")
+        self.assertNotIn("wxUSE_WEBVIEW_EDGE", defs(self.cfg()))
         self.assertEqual(d["CMAKE_BUILD_TYPE"], "Debug")
         self.assertEqual(d["wxUSE_CAIRO"], "ON")
 
@@ -90,9 +100,6 @@ class MswConfigureTests(unittest.TestCase):
                 os.environ.pop("CMAKE_GENERATOR", None)
             else:
                 os.environ["CMAKE_GENERATOR"] = old
-
-    def test_release_keeps_debug_info(self):
-        self.assertIn("/Zi", defs(self.cfg())["CMAKE_CXX_FLAGS_RELEASE"])
 
     def test_features_passthrough(self):
         a = self.cfg(features=["wxUSE_FOO=ON", "-DBAR=1", ""])
