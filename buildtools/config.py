@@ -680,6 +680,46 @@ def posixjoin(a, *p):
     return path
 
 
+#----------------------------------------------------------------------
+# The extension modules that make up wxPython. This is the single place to
+# add a new one: wscript builds each ETG module from etg/<name>.py, and
+# setup.py declares all of them to setuptools.
+
+# (module name, waf uselib flags) for the ETG generated modules
+ETG_MODULES = [
+    ('_core',       'WX'),
+    ('_adv',        'WXADV'),
+    ('_dataview',   'WXADV'),
+    ('_grid',       'WXADV'),
+    ('_stc',        'WXSTC'),
+    ('_html',       'WXHTML'),
+    ('_glcanvas',   'WXGL'),
+    ('_html2',      'WXWEBVIEW'),
+    ('_xml',        'WXXML'),
+    ('_xrc',        'WXXRC'),
+    ('_richtext',   'WXHTML WXRICHTEXT'),
+    ('_media',      'WXMEDIA'),
+    ('_ribbon',     'WXRIBBON'),
+    ('_propgrid',   'WXPROPGRID'),
+    ('_aui',        'WXAUI'),
+]
+
+# Modules that are platform-specific
+if sys.platform.startswith('win'):
+    ETG_MODULES.append(('_msw', 'WX'))
+
+
+def getExtensionModuleNames():
+    """
+    Return the dotted names of all of wxPython's compiled extension modules:
+    siplib and the ETG modules (built by waf), and wx.svg._nanosvg (built by
+    setup-wxsvg.py).
+    """
+    return (['wx.siplib'] +
+            ['wx.' + name for name, _ in ETG_MODULES] +
+            ['wx.svg._nanosvg'])
+
+
 def loadETG(name):
     """
     Execute an ETG script so we can load a namespace with its contents (such
