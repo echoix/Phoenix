@@ -5553,7 +5553,12 @@ class UltimateListHeaderWindow(wx.Control):
                     self._enter = True
                     self._currentColumn = column
 
-                    self._leftDown = wx.GetMouseState().LeftIsDown()
+                    if _VERSION_STRING < "2.9":
+                        leftDown = wx.GetMouseState().LeftDown()
+                    else:
+                        leftDown = wx.GetMouseState().LeftIsDown()
+
+                    self._leftDown = leftDown
 
                     self.Refresh()
 
@@ -5639,7 +5644,12 @@ class UltimateListHeaderWindow(wx.Control):
         x, y = self._owner.CalcUnscrolledPosition(*self.ScreenToClient(wx.GetMousePosition()))
         column = self.HitTestColumn(x, y)
 
-        self._leftDown = wx.GetMouseState().LeftIsDown()
+        if _VERSION_STRING < "2.9":
+            leftDown = wx.GetMouseState().LeftDown()
+        else:
+            leftDown = wx.GetMouseState().LeftIsDown()
+
+        self._leftDown = leftDown
         self._enter = column >= 0 and column < self._owner.GetColumnCount()
         self._currentColumn = column
         self.Refresh()
@@ -8526,7 +8536,10 @@ class UltimateListMainWindow(wx.ScrolledWindow):
         if checkbox:
             render.DrawCheckBox(self, mdc, (0, 0, x, y), flag)
         else:
-            render.DrawRadioBitmap(self, mdc, (0, 0, x, y), flag)
+            if _VERSION_STRING < "2.9":
+                render.DrawRadioButton(self, mdc, (0, 0, x, y), flag)
+            else:
+                render.DrawRadioBitmap(self, mdc, (0, 0, x, y), flag)
 
         mdc.SelectObject(wx.NullBitmap)
         return bmp

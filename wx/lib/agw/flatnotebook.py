@@ -201,6 +201,10 @@ if wx.Platform == '__WXMAC__':
     else:
         CARBON = True
 
+# Check for the new method in 2.7 (not present in 2.6.3.3)
+if wx.VERSION_STRING < "2.7":
+    wx.Rect.Contains = lambda self, point: wx.Rect.Inside(self, point)
+
 FNB_HEIGHT_SPACER = 10
 """ Padding for the tab widths/heights, in pixels. """
 
@@ -6443,7 +6447,7 @@ class PageContainer(wx.Panel):
 
             # There is an alignment problem with wx2.6.3 & Menus so only use
             # images for versions above 2.6.3
-            if self.TabHasImage(i):
+            if wx.VERSION > (2, 6, 3, 0) and self.TabHasImage(i):
                 item.SetBitmap(self.GetImageList().GetBitmap(pi.GetImageIndex()))
 
             popupMenu.Append(item)

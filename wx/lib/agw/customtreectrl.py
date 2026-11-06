@@ -3206,7 +3206,12 @@ class CustomTreeCtrl(wx.ScrolledWindow):
             if major < 10:
                 agwStyle |= TR_ROW_LINES
 
-        self._drawingfunction = wx.RendererNative.Get().DrawTreeItemButton
+        # A constant to use my translation of RendererNative.DrawTreeItemButton
+        # if the wxPython version is less than 2.6.2.1.
+        if _VERSION_STRING < "2.6.2.1":
+            self._drawingfunction = DrawTreeItemButton
+        else:
+            self._drawingfunction = wx.RendererNative.Get().DrawTreeItemButton
 
         # Set the separator pen default colour
         self._separatorPen = wx.Pen(wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRAYTEXT))
@@ -3333,7 +3338,10 @@ class CustomTreeCtrl(wx.ScrolledWindow):
         if checkbox:
             render.DrawCheckBox(self, mdc, (0, 0, x, y), flag)
         else:
-            render.DrawRadioBitmap(self, mdc, (0, 0, x, y), flag)
+            if _VERSION_STRING < "2.9":
+                render.DrawRadioButton(self, mdc, (0, 0, x, y), flag)
+            else:
+                render.DrawRadioBitmap(self, mdc, (0, 0, x, y), flag)
 
         mdc.SelectObject(wx.NullBitmap)
         bmp.SetMaskColour(mask)

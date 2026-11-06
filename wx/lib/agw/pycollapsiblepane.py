@@ -188,6 +188,13 @@ EVT_COLLAPSIBLEPANE_CHANGED = wx.EVT_COLLAPSIBLEPANE_CHANGED
 """ The user showed or hid the collapsible pane. """
 
 #-----------------------------------------------------------------------------
+# 2.9 deprecates SetSpacer, so we'll use AssignSpacer and monkey-patch 2.8 so
+# it works there too
+
+if wx.VERSION < (2, 9):
+    wx.SizerItem.AssignSpacer = wx.SizerItem.SetSpacer
+
+#-----------------------------------------------------------------------------
 # GTKExpander widget
 #-----------------------------------------------------------------------------
 
