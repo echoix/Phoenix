@@ -571,7 +571,7 @@ def run():
                     the problem you encountered.
                     """,
                 body="""\
-                    if _sys.platform.startswith('win') and _sys.version_info > (3,8):
+                    if _sys.platform.startswith('win'):
                         import locale
                         locale.setlocale(locale.LC_ALL, "C")
                     """),

@@ -136,6 +136,19 @@ build-frontend = "build"
 build-verbosity = 1
 enable = ["cpython-prerelease"]
 
+[tool.ruff]
+target-version = "py311"
+extend-include = ["wscript"]
+# These docs snippets are converted C++ fragments, not valid Python
+extend-exclude = ["docs/sphinx/rest_substitutions"]
+
+[tool.ruff.lint]
+# Only check for outdated Python version checks, for now
+select = [
+    "UP036", # outdated sys.version_info blocks
+    "YTT",   # misuse of sys.version / sys.version_info
+]
+
 [tool.pytest.ini_options]
 filterwarnings = [
     "ignore:wx\\.lib\\.pubsub has been deprecated, please migrate your code to use pypubsub, available on PyPI\\.:wx.wxPyDeprecationWarning",
