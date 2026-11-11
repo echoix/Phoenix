@@ -118,6 +118,7 @@ class PlotCanvas(wx.Panel):
         self._zoomCorner2 = np.array([0.0, 0.0])   # left mouse up corner
         self._zoomEnabled = False
         self._hasDragged = False
+        self._rubberBand = None
 
         # Drawing Variables
         self.last_draw = None
@@ -1575,11 +1576,12 @@ class PlotCanvas(wx.Panel):
     @xSpec.setter
     def xSpec(self, value):
         ok_values = ('none', 'min', 'auto')
-        if value not in ok_values and not isinstance(value, (int, float)):
-            if not isinstance(value, (list, tuple)) and len(value != 2):
-                err_str = ("xSpec must be 'none', 'min', 'auto', "
-                           "a number, or sequence of numbers (length 2)")
-                raise TypeError(err_str)
+        if isinstance(value, (list, tuple)) and len(value) == 2:
+            value = tuple(value)
+        elif value not in ok_values and not isinstance(value, (int, float)):
+            err_str = ("xSpec must be 'none', 'min', 'auto', "
+                       "a number, or sequence of numbers (length 2)")
+            raise TypeError(err_str)
         self._xSpec = value
 
     @property
@@ -1611,11 +1613,12 @@ class PlotCanvas(wx.Panel):
     @ySpec.setter
     def ySpec(self, value):
         ok_values = ('none', 'min', 'auto')
-        if value not in ok_values and not isinstance(value, (int, float)):
-            if not isinstance(value, (list, tuple)) and len(value != 2):
-                err_str = ("ySpec must be 'none', 'min', 'auto', "
-                           "a number, or sequence of numbers (length 2)")
-                raise TypeError(err_str)
+        if isinstance(value, (list, tuple)) and len(value) == 2:
+            value = tuple(value)
+        elif value not in ok_values and not isinstance(value, (int, float)):
+            err_str = ("ySpec must be 'none', 'min', 'auto', "
+                       "a number, or sequence of numbers (length 2)")
+            raise TypeError(err_str)
         self._ySpec = value
 
     def GetXMaxRange(self):
@@ -1790,6 +1793,9 @@ class PlotCanvas(wx.Panel):
         """
 
         if dc is None:
+            # Redrawing the buffer wipes any point label drawn on it, so it
+            # must not be "erased" again later, which would draw it back.
+            self.last_PointLabel = None
             # sets new dc and clears it
             dc = wx.BufferedDC(wx.ClientDC(self.canvas), self._Buffer)
             bbr = wx.Brush(self.GetBackgroundColour(), wx.BRUSHSTYLE_SOLID)
@@ -2082,14 +2088,9 @@ class PlotCanvas(wx.Panel):
     #       within these event handlers.
     def OnMotion(self, event):
         if self._zoomEnabled and event.LeftIsDown():
-            if self._hasDragged:
-                self._drawRubberBand(
-                    self._zoomCorner1, self._zoomCorner2)  # remove old
-            else:
-                self._hasDragged = True
+            self._hasDragged = True
             self._zoomCorner2[0], self._zoomCorner2[1] = self._getXY(event)
-            self._drawRubberBand(
-                self._zoomCorner1, self._zoomCorner2)  # add new
+            self._drawRubberBand(self._zoomCorner1, self._zoomCorner2)
         elif self._dragEnabled and event.LeftIsDown():
             coordinates = event.GetPosition()
             newpos, oldpos = map(
@@ -2117,8 +2118,7 @@ class PlotCanvas(wx.Panel):
     def OnMouseLeftUp(self, event):
         if self._zoomEnabled:
             if self._hasDragged is True:
-                self._drawRubberBand(
-                    self._zoomCorner1, self._zoomCorner2)  # remove old
+                self._clearRubberBand()
                 self._zoomCorner2[0], self._zoomCorner2[1] = self._getXY(event)
                 self._hasDragged = False  # reset flag
                 minX, minY = np.minimum(self._zoomCorner1, self._zoomCorner2)
@@ -2155,12 +2155,14 @@ class PlotCanvas(wx.Panel):
         if self.last_PointLabel is not None:
             self._drawPointLabel(self.last_PointLabel)  # erase old
             self.last_PointLabel = None
-        dc = wx.BufferedPaintDC(self.canvas, self._Buffer)
-        if self._antiAliasingEnabled:
-            try:
-                dc = wx.GCDC(dc)
-            except Exception:
-                pass
+        # The zoom box is drawn here, over the buffer and not into it, as
+        # drawing on a wx.ClientDC has no effect on macOS and GTK3 Wayland
+        dc = wx.PaintDC(self.canvas)
+        dc.DrawBitmap(self._Buffer, 0, 0)
+        if self._rubberBand is not None:
+            dc.SetPen(wx.Pen(wx.BLACK))
+            dc.SetBrush(wx.TRANSPARENT_BRUSH)
+            dc.DrawRectangle(self._rubberBand)
 
     def OnSize(self, event):
         # The Buffer init is done here, to make sure the buffer is always
@@ -2332,16 +2334,17 @@ class PlotCanvas(wx.Panel):
         return (legendBoxWH, symExt, txtExt)
 
     def _drawRubberBand(self, corner1, corner2):
-        """Draws/erases rect box from corner1 to corner2"""
+        """Shows the zoom rect box from corner1 to corner2"""
         ptx, pty, rectWidth, rectHeight = self._point2ClientCoord(
             corner1, corner2)
-        # draw rectangle
-        dc = wx.ClientDC(self.canvas)
-        dc.SetPen(wx.Pen(wx.BLACK))
-        dc.SetBrush(wx.Brush(wx.WHITE, wx.BRUSHSTYLE_TRANSPARENT))
-        dc.SetLogicalFunction(wx.INVERT)
-        dc.DrawRectangle(int(ptx), int(pty), int(rectWidth), int(rectHeight))
-        dc.SetLogicalFunction(wx.COPY)
+        self._rubberBand = wx.Rect(int(ptx), int(pty),
+                                   int(rectWidth), int(rectHeight))
+        self.canvas.Refresh(eraseBackground=False)
+
+    def _clearRubberBand(self):
+        """Hides the zoom rect box"""
+        self._rubberBand = None
+        self.canvas.Refresh(eraseBackground=False)
 
     def _getFont(self, size):
         """Take font size, adjusts if printing and returns wx.Font"""

@@ -160,6 +160,14 @@ class TestPoint(unittest.TestCase):
         assert v3 == (13, 17)
         assert v4 == (14, 19)
 
+    def test_floatingDivide(self):
+        v0 = wx.Point(30, 41)
+        assert v0 / 4 == (7, 10)
+        assert v0 / 4.0 == (8, 10)
+        assert v0 / 4.4 == (7, 9)
+        v0 /= 2.0
+        assert v0 == (15, 21)
+
 #---------------------------------------------------------------------------
 
 
@@ -311,6 +319,14 @@ class TestSize(unittest.TestCase):
         assert v3 == (13, 18)
         assert v4 == (15, 20)
 
+    def test_floatingDivide(self):
+        v0 = wx.Size(30, 41)
+        assert v0 / 4 == (7, 10)
+        assert v0 / 4.0 == (8, 10)
+        assert v0 / 4.4 == (7, 9)
+        v0 /= 2.0
+        assert v0 == (15, 21)
+
 
 #---------------------------------------------------------------------------
 
@@ -337,16 +353,21 @@ class TestRealPoint(unittest.TestCase):
         p.y += 2
 
 
-    @unittest.skip("Fails: https://github.com/wxWidgets/Phoenix/issues/2070")
     def test_GetIM(self):
         # Test the immutable version returned by GetIM
-        obj = wx.RealPoint(1,2)
+        obj = wx.RealPoint(1.2, 3.4)
         im = obj.GetIM()
         assert isinstance(im, tuple)
         assert im.x == obj.x
         assert im.y == obj.y
         obj2 = wx.RealPoint(im)
         assert obj == obj2
+
+
+    def test_ctorSequence(self):
+        self.assertEqual(wx.RealPoint((1.2, 3.4)), wx.RealPoint(1.2, 3.4))
+        self.assertEqual(wx.RealPoint([1.2, 3.4]), wx.RealPoint(1.2, 3.4))
+        self.assertEqual(wx.RealPoint(wx.Point(1, 2)), wx.RealPoint(1.0, 2.0))
 
 
     def test_floatingMultiply(self):
@@ -362,6 +383,14 @@ class TestRealPoint(unittest.TestCase):
         assert round(v3.y, 2) == 17.60
         assert round(v4.x, 2) == 14.70
         assert round(v4.y, 2) == 19.60
+
+    def test_floatingDivide(self):
+        v0 = wx.RealPoint(3, 4)
+        assert v0 / 2 == (1.5, 2.0)
+        assert v0 / 2.0 == (1.5, 2.0)
+        assert v0 / 0.5 == (6.0, 8.0)
+        v0 /= 4.0
+        assert v0 == (0.75, 1.0)
 
 
 #---------------------------------------------------------------------------

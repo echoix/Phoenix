@@ -49,6 +49,14 @@ class MaskedTextCtrlTests(wtc.WidgetTestCase):
         t.StringSelection
         t.Value
 
+    def test_textctrlAutoComplete(self):
+        t = m.TextCtrl(self.frame)
+        choices = ['apple', 'banana', 'blueberry', 'cherry']
+        self.assertEqual(t._autoComplete(1, choices, 'b', False, None), (1, True))
+        self.assertEqual(t._autoComplete(-1, choices, 'b', False, None), (2, True))
+        self.assertEqual(t._autoComplete(1, choices, 'b', False, 1), (2, True))
+        self.assertEqual(t._autoComplete(-1, choices, 'b', False, 2), (1, True))
+
 
 #---------------------------------------------------------------------------
 
@@ -145,6 +153,24 @@ class MaskedIpAddrCtrlTests(wtc.WidgetTestCase):
         t.Margins
         t.StringSelection
         t.Value
+
+
+class TimeCtrlTests(wtc.WidgetTestCase):
+
+    def test_timectrlInvalidString(self):
+        t = m.TimeCtrl(self.frame)
+        with self.assertRaises(ValueError):
+            t.GetWxDateTime('not a time')
+
+    def test_timectrlSetParametersKeepsValue(self):
+        t = m.TimeCtrl(self.frame, value='14:34:56')
+        t.SetParameters(format='24HHMMSS')
+        self.assertEqual(t.GetValue(), '14:34:56')
+
+    def test_timectrlSetTimeSpan(self):
+        t = m.TimeCtrl(self.frame, fmt24hr=True)
+        t.SetValue(wx.TimeSpan(13, 45, 30))
+        self.assertEqual(t.GetValue(), '13:45:30')
 
 
 #---------------------------------------------------------------------------

@@ -44,6 +44,28 @@ class IntCtrlTests(wtc.WidgetTestCase):
         with self.assertRaises(ValueError):
             t.SetValue(big)
 
+    def test_cutWholeValue(self):
+        t = IC.IntCtrl(self.frame, value=123)
+        t.SetSelection(0, 3)
+        if not wx.TheClipboard.Open():
+            self.skipTest('The clipboard is not available')
+        wx.TheClipboard.Close()
+        t.Cut()
+        self.assertEqual(t.GetValue(), 0)
+
+    def test_pasteNonText(self):
+        t = IC.IntCtrl(self.frame, value=123)
+        if not wx.TheClipboard.Open():
+            self.skipTest('The clipboard is not available')
+        wx.TheClipboard.SetData(wx.BitmapDataObject(wx.Bitmap(8, 8)))
+        wx.TheClipboard.Close()
+
+        evt = wx.KeyEvent(wx.wxEVT_CHAR)
+        evt.SetKeyCode(IC.WXK_CTRL_V)
+        evt.SetEventObject(t)
+        t.GetValidator().OnChar(evt)
+        self.assertEqual(t.GetValue(), 123)
+
 
 #---------------------------------------------------------------------------
 

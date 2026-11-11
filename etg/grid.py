@@ -287,8 +287,33 @@ def run():
     c.addPrivateAssignOp()
     c.addPrivateDefaultCtor()
     c.instanceCode = """\
-        wxGridActivationResult result = wxGridActivationResult::DoNothing();
+        static wxGridActivationResult result = wxGridActivationResult::DoNothing();
         sipCpp = &result;
+        """
+
+    # wxGridActivationResult has const members, so SIP's usual virtual handler
+    # can't assign the Python result to sipRes. Copy-construct it and return
+    # early instead, doing the cleanup that the generated code would do.
+    tryActivateCatcherCode = """\
+        PyObject *resObj = sipCallMethod(&sipIsErr, sipMethod, "iiDN", row, col,
+                                         grid, sipType_wxGrid, SIP_NULLPTR,
+                                         new wxGridActivationSource(actSource),
+                                         sipType_wxGridActivationSource, SIP_NULLPTR);
+        if (resObj) {
+            int state = 0;
+            wxGridActivationResult *res = reinterpret_cast<wxGridActivationResult *>(
+                sipForceConvertToType(resObj, sipType_wxGridActivationResult, SIP_NULLPTR,
+                                      SIP_NOT_NONE, &state, &sipIsErr));
+            if (!sipIsErr) {
+                wxGridActivationResult rv(*res);
+                sipReleaseType(res, sipType_wxGridActivationResult, state);
+                Py_DECREF(resObj);
+                Py_DECREF(sipMethod);
+                SIP_RELEASE_GIL(sipGILState)
+                return rv;
+            }
+            Py_DECREF(resObj);
+        }
         """
 
 
@@ -324,11 +349,32 @@ def run():
             klass.find('EndEdit').ignore()
             pureVirtual = True
 
+        # Like SIP's generated code for virtuals, make a non-virtual call when
+        # self is an instance of a Python subclass. Otherwise calling the base
+        # class EndEdit from an overridden EndEdit calls the override again.
+        derivedBody = f"""\
+            wxString newval;
+            bool rv = sipSelfWasArg
+                ? sipCpp->::{name}::EndEdit(row, col, grid, *oldval, &newval)
+                : sipCpp->EndEdit(row, col, grid, *oldval, &newval);
+            {{
+                wxPyThreadBlocker blocker;
+                if (rv) {{
+                    sipRes = wx2PyString(newval);
+                }}
+                else {{
+                    Py_INCREF(Py_None);
+                    sipRes = Py_None;
+                }}
+            }}
+            """
+
         # The Python version of EndEdit has a different signature than the
         # C++ version, so we need to take care of mapping between them so the
         # C++ compiler still recognizes this as a match for the virtual
         # method in the base class.
-        klass.addCppMethod('PyObject*', 'EndEdit', '(int row, int col, const wxGrid* grid, const wxString& oldval)',
+        addCppMethod = klass.addCppMethod if pureVirtual else klass.addCppMethod_sip
+        addCppMethod('PyObject*', 'EndEdit', '(int row, int col, const wxGrid* grid, const wxString& oldval)',
             cppSignature='bool (int row, int col, const wxGrid* grid, const wxString& oldval, wxString* newval)',
             pyArgsString='(row, col, grid, oldval)',
             isVirtual=True,
@@ -359,7 +405,7 @@ def run():
                     Py_INCREF(Py_None);
                     return Py_None;
                 }
-                """,
+                """ if pureVirtual else derivedBody,
 
             # Code for C++ --> Python calls. This is used when a C++ method
             # call needs to be reflected to a call to the overridden Python
@@ -392,10 +438,12 @@ def run():
     c.addPrivateCopyCtor()
     c.find('~wxGridCellEditor').ignore(False)
     c.find('Clone').factory = True
+    c.find('TryActivate').virtualCatcherCode = tryActivateCatcherCode
     tools.fixRefCountedClass(c)
 
 
     c = module.find('wxGridCellActivatableEditor')
+    c.find('TryActivate').virtualCatcherCode = tryActivateCatcherCode
 
 
     c = module.find('wxGridCellChoiceEditor')

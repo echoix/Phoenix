@@ -250,7 +250,8 @@ def setPythonVersion(args):
             else:
                 PYTHON = args[idx+1]
                 del args[idx:idx+2]
-            PYVER = runcmd([PYTHON, '-c', 'import sys; print(sys.version[:3])'],
+            # chr(46) is '.', used to avoid nested quotes in the -c string
+            PYVER = runcmd([PYTHON, '-c', 'import sys; print(*sys.version_info[:2], sep=chr(46))'],
                            getOutput=True, echoCmd=False)
             PYSHORTVER = PYVER[0] + PYVER[2:]
             break
@@ -281,12 +282,12 @@ def setPythonVersion(args):
 
         elif isWindows:
             # Otherwise check if the invoking Python is the right version
-            if sys.version[:3] != PYVER:
+            if '%d.%d' % sys.version_info[:2] != PYVER:
                 msg('ERROR: The invoking Python is not the requested version.  Perhaps you should use --python')
                 sys.exit(1)
             PYTHON = sys.executable
-            PYVER = sys.version[:3]
-            PYSHORTVER = PYVER[0] + PYVER[2]
+            PYVER = '%d.%d' % sys.version_info[:2]
+            PYSHORTVER = PYVER[0] + PYVER[2:]
 
         elif not isWindows:
             # find a pythonX.Y on the PATH
@@ -1917,7 +1918,7 @@ def cmd_build_py(options, args):
 
     # Run waf to perform the builds
     pwd = pushDir(phoenixDir())
-    cmd = '"%s" %s %s configure build %s' % (PYTHON, waf, ' '.join(build_options), options.extra_waf)
+    cmd = '"%s" "%s" %s configure build %s' % (PYTHON, waf, ' '.join(build_options), options.extra_waf)
 
     def _onWafError():
         if options.dump_waf_log:
@@ -1937,7 +1938,7 @@ def cmd_build_py(options, args):
         del build_options[-1]
         wafBuildDir = posixjoin(wafBuildBase, 'release')
         build_options.append('--out=%s' % wafBuildDir)
-        cmd = '"%s" %s %s configure build %s' % (PYTHON, waf, ' '.join(build_options), options.extra_waf)
+        cmd = '"%s" "%s" %s configure build %s' % (PYTHON, waf, ' '.join(build_options), options.extra_waf)
         runcmd(cmd, onError=_onWafError)
 
     copyWxDlls(options)

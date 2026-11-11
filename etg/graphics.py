@@ -46,6 +46,7 @@ def run():
     # customizing the generated code and docstrings.
 
     module.addHeaderCode('#include <wx/gdicmn.h>')
+    module.addHeaderCode('#include "textextents.h"')
 
     def markCreateFactories(klass):
         """Mark all Create methods as factories"""
@@ -118,6 +119,7 @@ def run():
     m.setCppCode("""\
         wxArrayDouble rval;
         self->GetPartialTextExtents(*text, rval);
+        wxPyFixPartialExtents(*text, rval);
         return new wxArrayDouble(rval);
         """)
 
@@ -302,13 +304,41 @@ def run():
 
     #---------------------------------------------
     c = module.find('wxGraphicsPenInfo')
-    # Ignore Dashes for now
-    # TODO: we need to do something like wx.Pen.SetDashes, but since
-    # GraphicsPenInfo is transitory we can't save the reference in it to the
-    # holder, and the pen will not have been created yet...
-    c.find('Dashes').ignore()
-    c.find('GetDashes').ignore()
-    c.find('GetDashCount').ignore()
+    # The info only stores a pointer to the dashes, so keep them in a holder
+    # owned by this object, like wx.Pen.SetDashes does. The renderers copy the
+    # dashes when the pen is created, so the holder doesn't need to outlive
+    # the info.
+    c.addHeaderCode('#include "arrayholder.h"')
+    m = c.find('Dashes')
+    m.find('nb_dashes').ignore()
+    m.find('dash').ignore()
+    m.items.append(etgtools.ParamDef(type='const wxArrayInt&', name='dashes'))
+    m.detailedDoc.append('The dashes are only used if the style is set to '
+                         '``wx.PENSTYLE_USER_DASH``.')
+    m.setCppCode_sip("""\
+        size_t len = dashes->GetCount();
+        wxDashCArrayHolder* holder = new wxDashCArrayHolder;
+        holder->m_array = new wxDash[len];
+        for (size_t idx = 0; idx < len; idx++)
+            holder->m_array[idx] = (*dashes)[idx];
+        PyObject* pyHolder = sipConvertFromNewType(
+                (void*)holder, sipType_wxDashCArrayHolder, (PyObject*)sipSelf);
+        Py_DECREF(pyHolder);
+        sipRes = &sipCpp->Dashes(len, holder->m_array);
+        """)
+
+    m = c.find('GetDashes')
+    m.find('ptr').ignore()
+    m.type = 'wxArrayInt*'
+    m.factory = True
+    m.setCppCode("""\
+        wxArrayInt* arr = new wxArrayInt;
+        wxDash* dashes;
+        int num = self->GetDashes(&dashes);
+        for (int i = 0; i < num; i++)
+            arr->Add(dashes[i]);
+        return arr;
+        """)
     c.find('GetDash').ignore()
 
 

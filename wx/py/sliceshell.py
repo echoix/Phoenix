@@ -20,7 +20,6 @@ import keyword
 import os
 import sys
 import time
-from functools import cmp_to_key
 
 from .buffer import Buffer
 from . import dispatcher
@@ -836,9 +835,11 @@ class SlicesShell(editwindow.EditWindow):
 
         # Make "executed startup script move to the top..."
         if showPySlicesTutorial:
+            firstLine = self.GetCurrentLine()
             self.write(tutorialText,'Output')
-            tutStart=5
-            testStart=16
+            tutorialLines = tutorialText.split('\n')
+            tutStart = firstLine + [line.strip() for line in tutorialLines].index('Tutorial!!!')
+            testStart = firstLine + tutorialLines.index('a=1')
             outStart=[tutStart,testStart+3]
             outEnd=[tutStart-1,testStart-1]
             inStart=[testStart]
@@ -2143,10 +2144,10 @@ class SlicesShell(editwindow.EditWindow):
 
         #unique (no duplicate words
         #oneliner from german python forum => unique list
-        unlist = [thlist[i] for i in xrange(len(thlist)) if thlist[i] not in thlist[:i]]
+        unlist = [thlist[i] for i in range(len(thlist)) if thlist[i] not in thlist[:i]]
 
         #sort lowercase
-        unlist.sort(key=cmp_to_key(lambda a, b: cmp(a.lower(), b.lower())))
+        unlist.sort(key=str.lower)
 
         #this is more convenient, isn't it?
         self.AutoCompSetIgnoreCase(True)
@@ -3470,9 +3471,9 @@ class SlicesShell(editwindow.EditWindow):
         self.ReplaceSelection('')
 
         hasSyntaxError=False
-        result = self.BreakTextIntoCommands(command)
+        result = self.BreakTextIntoCommands(text)
         if result[0] is None:
-            commands=[command]
+            commands = [text]
             hasSyntaxError=True
         else:
             commands=result

@@ -97,6 +97,7 @@ def run():
         wxPoint operator-(const wxSize& other);
         wxPoint operator*(double d);
         wxPoint operator/(int i);
+        wxPoint operator/(double d /Constrained/);
         """))
 
 
@@ -169,6 +170,7 @@ def run():
         wxSize operator-(const wxSize& other);
         wxSize operator*(double d);
         wxSize operator/(int i);
+        wxSize operator/(double d /Constrained/);
 
         wxPoint operator+(const wxPoint& other);
         wxPoint operator-(const wxPoint& other);
@@ -296,6 +298,10 @@ def run():
     c = module.find('wxRealPoint')
     tools.addAutoProperties(c)
 
+    # Only accept a real wx.Point here, otherwise wx.Point's sequence
+    # convertor grabs tuples meant for the copy constructor and truncates them
+    c.find('wxRealPoint').findOverload('const wxPoint &').find('pt').constrained = True
+
     # take care of the same issues as wxPoint
     tools.ignoreAllOperators(c)
     for f in c.find('operator+=').all() + \
@@ -310,7 +316,7 @@ def run():
     c.addItem(etgtools.WigCode("""\
         wxRealPoint operator+(const wxRealPoint& other);
         wxRealPoint operator-(const wxRealPoint& other);
-        wxRealPoint operator/(int i);
+        wxRealPoint operator/(double d);
         """))
 
     # wxRealPoint::operator* truncates to int before assigning to the new point

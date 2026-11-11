@@ -332,21 +332,19 @@ class SButton(wx.Window):
 
         :param `colour`: an instance of :class:`wx.Colour`.
 
-        :note: The original button images are greyscale with a lot of pixels with
-         different colours. Changing smoothly the button colour in order to
-         give the same 3D effect can be efficiently done only with PIL.
+        :note: The button images are greyscale, so they are tinted with the colour,
+         keeping their 3D shading. The default, white, leaves them unchanged.
         """
 
         if colour is None:
             colour = wx.WHITE
 
-        palette = colour.Red(), colour.Green(), colour.Blue()
-
         self._buttoncolour = colour
 
-        self._mainbuttondown = DownButton.GetImage()
-        self._mainbuttonup = UpButton.GetImage()
-
+        r, g, b = colour.Red() / 255, colour.Green() / 255, colour.Blue() / 255
+        self._mainbuttondown = DownButton.GetImage().AdjustChannels(r, g, b)
+        self._mainbuttonup = UpButton.GetImage().AdjustChannels(r, g, b)
+        self.Refresh()
 
 
     def GetButtonColour(self):
@@ -1247,7 +1245,7 @@ class SBitmapTextButton(SBitmapButton):
             xc, yc = (width//2, height//2)
             xp = xc - (tw//2)* cos(rotangle) - (th//2)*sin(rotangle)
             yp = yc + (tw//2)*sin(rotangle) - (th//2)*cos(rotangle)
-            dc.DrawRotatedText(label, xp, yp , rotangle*180.0/pi)
+            dc.DrawRotatedText(label, int(xp), int(yp), rotangle * 180.0 / pi)
 
 
 #----------------------------------------------------------------------

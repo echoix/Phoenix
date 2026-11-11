@@ -246,7 +246,7 @@ class DrawObject:
         ## fixme: this only removes one from each list, there could be more.
         ## + patch by Tim Ansel
         if self._Canvas.HitDict:
-            for Event in self._Canvas.HitDict.itervalues():
+            for Event in self._Canvas.HitDict.values():
                 try:
                     del Event[self.HitColor]
                 except KeyError:
@@ -2230,6 +2230,8 @@ class ScaledBitmap2(TextObjectMixin, DrawObject, ):
         if Width is None:
             self.BmpScale = float(self.bmpHeight) / Height
             self.Width = self.bmpWidth / self.BmpScale
+        else:
+            self.Width = Width
         self.WH = np.array((self.Width, Height), float)
         ##fixme: should this have a y = -1 to shift to y-up?
         self.BmpScale = self.bmpWH / self.WH
@@ -2385,8 +2387,7 @@ class DotGrid:
     """
     def __init__(self, Spacing, Size = 2, Color = "Black", Cross=False, CrossThickness = 1):
 
-        self.Spacing = np.array(Spacing, float)
-        self.Spacing = self.Spacing.reshape((2,))
+        self.Spacing = np.broadcast_to(np.asarray(Spacing, float), (2,)).copy()
         self.Size = Size
         self.Color = Color
         self.Cross = Cross

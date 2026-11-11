@@ -44,6 +44,18 @@ def run():
     c.find('Pulse.skip').out = True
     c.find('Update.skip').out = True
 
+    # The C++ docs describe the bool return value, but skip is an output too
+    m = c.find('Update')
+    m.detailedDoc[0:2] = [
+        'Returns a tuple ``(continue, skip)``. ``continue`` is ``True`` unless '
+        'the "Cancel" button has been pressed, and ``skip`` is ``True`` if the '
+        '"Skip" button has been pressed since the last call.',
+        'If ``continue`` is ``False``, the application can either immediately '
+        'destroy the dialog or ask the user for the confirmation and if the '
+        'abort is not confirmed the dialog may be resumed with :meth:`Resume`.']
+    c.find('Pulse').detailedDoc.insert(
+        1, 'Returns a tuple ``(continue, skip)``, like :meth:`Update`.')
+
 
     c = module.find('wxProgressDialog')
 
@@ -59,6 +71,20 @@ def run():
             c.addItem(copy.deepcopy(item))
 
     tools.fixWindowClass(c)
+
+    # wx only sets skip when it is false on input, so it must start out false
+    for klass in (gpd, c):
+        name = klass.name
+        klass.find('Update').setCppCode_sip(f"""\
+            skip = false;
+            sipRes = sipSelfWasArg ? sipCpp->::{name}::Update(value, *newmsg, &skip)
+                                   : sipCpp->Update(value, *newmsg, &skip);
+            """)
+        klass.find('Pulse').setCppCode_sip(f"""\
+            skip = false;
+            sipRes = sipSelfWasArg ? sipCpp->::{name}::Pulse(*newmsg, &skip)
+                                   : sipCpp->Pulse(*newmsg, &skip);
+            """)
 
     #-----------------------------------------------------------------
     tools.doCommonTweaks(module)

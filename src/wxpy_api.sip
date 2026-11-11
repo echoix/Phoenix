@@ -153,11 +153,19 @@ static bool i_wxPyConvertWrappedPtr(PyObject* obj, void **ptr, const wxString& c
 //--------------------------------------------------------------------------
 // Deal with the GIL
 
+// Py_IsInitialized() is already false while Py_FinalizeEx() destroys modules,
+// but objects freed then (e.g. a module-level wx.PyEvent) still need the GIL.
+// The finalizing thread keeps its thread state until finalization is done.
+static bool wxPyCanBlockThreads()
+{
+    return Py_IsInitialized() || PyGILState_GetThisThreadState() != NULL;
+}
+
 // Calls from wxWindows back to Python code, or even any PyObject
 // manipulations, PyDECREF's and etc. should be wrapped in calls to these functions:
 static wxPyBlock_t i_wxPyBeginBlockThreads()
 {
-    if (! Py_IsInitialized()) {
+    if (!wxPyCanBlockThreads()) {
         return (wxPyBlock_t)0;
     }
     PyGILState_STATE state = PyGILState_Ensure();
@@ -166,7 +174,7 @@ static wxPyBlock_t i_wxPyBeginBlockThreads()
 
 static void i_wxPyEndBlockThreads(wxPyBlock_t blocked)
 {
-    if (! Py_IsInitialized()) {
+    if (!wxPyCanBlockThreads()) {
         return;
     }
     PyGILState_Release(blocked);
@@ -321,6 +329,12 @@ wxVariant i_wxVariant_in_helper(PyObject* obj)
         value << *ptr;
     }
 
+    else if (wxPyWrappedPtr_TypeCheck(obj, wxT("wxBitmapBundle"))) {
+        wxBitmapBundle* ptr;
+        wxPyConvertWrappedPtr(obj, (void**)&ptr, wxT("wxBitmapBundle"));
+        value << *ptr;
+    }
+
     else if (wxPyWrappedPtr_TypeCheck(obj, wxT("wxImage"))) {
         wxImage* ptr;
         wxPyConvertWrappedPtr(obj, (void**)&ptr, wxT("wxImage"));
@@ -397,6 +411,12 @@ PyObject* i_wxVariant_out_helper(const wxVariant& value)
         wxBitmap val;
         val << value;
         obj = wxPyConstructObject(new wxBitmap(val), "wxBitmap", true);
+    }
+
+    else if ( value.IsType("wxBitmapBundle") ) {
+        wxBitmapBundle val;
+        val << value;
+        obj = wxPyConstructObject(new wxBitmapBundle(val), "wxBitmapBundle", true);
     }
 
     else if ( value.IsType("wxImage") ) {

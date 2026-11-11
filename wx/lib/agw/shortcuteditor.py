@@ -1608,10 +1608,11 @@ class Shortcut(object):
         :param `table`: a list of tuples, with the above specifications.
         """
 
-        if self._id is not None or not self.changed:
+        # The whole table is rebuilt, so unchanged accelerators must be kept too.
+        if self._id is not None or self.GetId() is None:
             return
 
-        if self.GetId() is None:
+        if self.accelerator == DISABLED_STRING:
             return
 
         accelerator = self.accelerator
@@ -2492,7 +2493,7 @@ class ShortcutEditor(wx.Dialog):
             total_width += width
 
         self.listShortcut.GetMainWindow()._lineHeight += 5
-        dialogHeight = wx.SystemSettings.GetMetric(wx.SYS_SCREEN_Y)/2
+        dialogHeight = wx.SystemSettings.GetMetric(wx.SYS_SCREEN_Y) // 2
 
         self.SetSize((total_width+60, dialogHeight))
 

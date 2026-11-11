@@ -16,7 +16,6 @@ import os.path
 import shutil
 import wx
 import sys
-from functools import cmp_to_key
 _ = wx.GetTranslation
 
 
@@ -70,6 +69,35 @@ def PathOnly(path):
     return os.path.split(path)[0]
 
 
+def _ProcessFrameEvent(window, baseClass, event):
+    """
+    Processes an event sent to one of the framework's windows.
+
+    ProcessEvent is virtual in wxPython, so these windows get every event, not
+    only the commands that the framework routes through views, documents, the
+    document manager and services.  Route menu commands and UI updates that
+    way, and let the base class send everything else to the bound handlers.
+    """
+    key = wx.siplib.unwrapinstance(event)
+    routing = window.__dict__.setdefault('_routingEvents', set())
+    if key in routing:
+        # A handler bound to window.ProcessEvent is being called for the event
+        # that is already being processed.
+        return False
+    routing.add(key)
+    try:
+        if isinstance(event, wx.UpdateUIEvent):
+            processUpdateUIEvent = getattr(window, 'ProcessUpdateUIEvent', None)
+            if processUpdateUIEvent and processUpdateUIEvent(event):
+                return True
+        elif event.GetEventType() == wx.wxEVT_MENU or isinstance(event, wx.FindDialogEvent):
+            if window._RouteEvent(event):
+                return True
+        return baseClass.ProcessEvent(window, event)
+    finally:
+        routing.discard(key)
+
+
 #----------------------------------------------------------------------
 # Document/View Classes
 #----------------------------------------------------------------------
@@ -111,9 +139,7 @@ class Document(wx.EvtHandler):
     def ProcessEvent(self, event):
         """
         Processes an event, searching event tables and calling zero or more
-        suitable event handler function(s).  Note that the ProcessEvent
-        method is called from the wxPython docview framework directly since
-        wxPython does not have a virtual ProcessEvent function.
+        suitable event handler function(s).
         """
         # TODO: ProcessEvent is virtual now, should this method just go away?
         return False
@@ -472,7 +498,7 @@ class Document(wx.EvtHandler):
                 shutil.copy(filename, backupFilename)
                 copied = True
 
-            fileObject = file(filename, 'w')
+            fileObject = open(filename, 'w')
             self.SaveObject(fileObject)
             fileObject.close()
             fileObject = None
@@ -491,14 +517,14 @@ class Document(wx.EvtHandler):
             if backupFilename and copied:
                 os.remove(backupFilename)
 
-            wx.MessageBox("Could not save '%s'.  %s" % (FileNameFromPath(filename), sys.exc_value),
+            wx.MessageBox("Could not save '%s'.  %s" % (FileNameFromPath(filename), sys.exc_info()[1]),
                           msgTitle,
                           wx.OK | wx.ICON_EXCLAMATION,
                           self.GetDocumentWindow())
             return False
 
-        self.SetDocumentModificationDate()
         self.SetFilename(filename, True)
+        self.SetDocumentModificationDate()
         self.Modify(False)
         self.SetDocumentSaved(True)
         #if wx.Platform == '__WXMAC__':  # Not yet implemented in wxPython
@@ -522,7 +548,7 @@ class Document(wx.EvtHandler):
         if not msgTitle:
             msgTitle = _("File Error")
 
-        fileObject = file(filename, 'r')
+        fileObject = open(filename, 'r')
         try:
             self.LoadObject(fileObject)
             fileObject.close()
@@ -535,14 +561,14 @@ class Document(wx.EvtHandler):
             if fileObject:
                 fileObject.close()  # file is still open, close it
 
-            wx.MessageBox("Could not open '%s'.  %s" % (FileNameFromPath(filename), sys.exc_value),
+            wx.MessageBox("Could not open '%s'.  %s" % (FileNameFromPath(filename), sys.exc_info()[1]),
                           msgTitle,
                           wx.OK | wx.ICON_EXCLAMATION,
                           self.GetDocumentWindow())
             return False
 
-        self.SetDocumentModificationDate()
         self.SetFilename(filename, True)
+        self.SetDocumentModificationDate()
         self.Modify(False)
         self.SetDocumentSaved(True)
         self.UpdateAllViews()
@@ -1178,7 +1204,7 @@ class DocTemplate(wx.Object):
         return self._icon
 
 
-    def SetIcon(self, flags):
+    def SetIcon(self, icon):
         """
         Sets the icon.
         """
@@ -1705,9 +1731,7 @@ class DocManager(wx.EvtHandler):
     def ProcessEvent(self, event):
         """
         Processes an event, searching event tables and calling zero or more
-        suitable event handler function(s).  Note that the ProcessEvent
-        method is called from the wxPython docview framework directly since
-        wxPython does not have a virtual ProcessEvent function.
+        suitable event handler function(s).
         """
         view = self.GetCurrentView()
         if view:
@@ -1941,7 +1965,7 @@ class DocManager(wx.EvtHandler):
                 view.SetViewName(temp.GetViewName())
             return view
 
-        temp = SelectViewType(templates)
+        temp = self.SelectViewType(templates)
         if temp:
             view = temp.CreateView(doc, flags)
             if view:
@@ -1993,7 +2017,7 @@ class DocManager(wx.EvtHandler):
         return name
 
 
-    def MakeFrameTitle(self):
+    def MakeFrameTitle(self, doc=None):
         """
         Returns a suitable title for a document frame. This is implemented by
         appending the document name to the application name.
@@ -2218,18 +2242,13 @@ class DocManager(wx.EvtHandler):
             return templates[0]
 
         if sort:
-            def tempcmp(a, b):
-                return cmp(a.GetDescription(), b.GetDescription())
-            templates.sort(key=cmp_to_key(tempcmp))
+            templates.sort(key=lambda temp: temp.GetDescription())
 
         strings = []
         for temp in templates:
             strings.append(temp.GetDescription())
 
-        res = wx.GetSingleChoiceIndex(_("Select a document type:"),
-                                      _("Documents"),
-                                      strings,
-                                      self.FindSuitableParent())
+        res = self._GetSingleChoiceIndex(_("Select a document type:"), _("Documents"), strings)
         if res == -1:
             return None
         return templates[res]
@@ -2247,10 +2266,10 @@ class DocManager(wx.EvtHandler):
         templates = []
         strings = []
         for temp in temps:
-            if temp.IsVisible() and temp.GetViewTypeName():
+            if temp.IsVisible() and temp.GetViewName():
                 if temp.GetViewName() not in strings:
                     templates.append(temp)
-                    strings.append(temp.GetViewTypeName())
+                    strings.append(temp.GetViewName())
 
         if len(templates) == 0:
             return None
@@ -2258,17 +2277,23 @@ class DocManager(wx.EvtHandler):
             return templates[0]
 
         if sort:
-            def tempcmp(a, b):
-                return cmp(a.GetViewTypeName(), b.GetViewTypeName())
-            templates.sort(key=cmp_to_key(tempcmp))
+            templates.sort(key=lambda temp: temp.GetViewName())
+            strings = [temp.GetViewName() for temp in templates]
 
-        res = wx.GetSingleChoiceIndex(_("Select a document view:"),
-                                      _("Views"),
-                                      strings,
-                                      self.FindSuitableParent())
+        res = self._GetSingleChoiceIndex(_("Select a document view:"), _("Views"), strings)
         if res == -1:
             return None
         return templates[res]
+
+
+    def _GetSingleChoiceIndex(self, message, caption, choices):
+        dialog = wx.SingleChoiceDialog(self.FindSuitableParent(), message, caption, choices)
+        try:
+            if dialog.ShowModal() == wx.ID_OK:
+                return dialog.GetSelection()
+            return -1
+        finally:
+            dialog.Destroy()
 
 
     def GetTemplates(self):
@@ -2400,8 +2425,15 @@ class DocParentFrame(wx.Frame):
 
     def ProcessEvent(self, event):
         """
-        Processes an event, searching event tables and calling zero or more
-        suitable event handler function(s).
+        Processes an event, routing menu commands through the document
+        manager before searching the event tables.
+        """
+        return _ProcessFrameEvent(self, wx.Frame, event)
+
+
+    def _RouteEvent(self, event):
+        """
+        Routes a menu command through the document manager.
         """
         return self._docManager and self._docManager.ProcessEvent(event)
 
@@ -2435,7 +2467,7 @@ class DocParentFrame(wx.Frame):
             msgTitle = wx.GetApp().GetAppName()
             if not msgTitle:
                 msgTitle = _("File Error")
-            wx.MessageBox("The file '%s' doesn't exist and couldn't be opened.\nIt has been removed from the most recently used files list" % FileNameFromPath(file),
+            wx.MessageBox("The file '%s' doesn't exist and couldn't be opened.\nIt has been removed from the most recently used files list" % FileNameFromPath(filename),
                           msgTitle,
                           wx.OK | wx.ICON_EXCLAMATION,
                           self)
@@ -2505,8 +2537,15 @@ class DocChildFrame(wx.Frame):
 
     def ProcessEvent(self, event):
         """
-        Processes an event, searching event tables and calling zero or more
-        suitable event handler function(s).
+        Processes an event, routing menu commands through the view and the
+        parent frame before searching the event tables.
+        """
+        return _ProcessFrameEvent(self, wx.Frame, event)
+
+
+    def _RouteEvent(self, event):
+        """
+        Routes a menu command through the view and the parent frame.
         """
         if self._childView:
             self._childView.Activate(True)
@@ -2526,8 +2565,8 @@ class DocChildFrame(wx.Frame):
         Processes a UI event, searching event tables and calling zero or more
         suitable event handler function(s).
         """
-        if self.GetParent():
-            self.GetParent().ProcessUpdateUIEvent(event)
+        if hasattr(self.GetParent(), 'ProcessUpdateUIEvent'):
+            return self.GetParent().ProcessUpdateUIEvent(event)
         else:
             return False
 
@@ -2646,8 +2685,15 @@ class DocMDIParentFrame(wx.MDIParentFrame):
 
     def ProcessEvent(self, event):
         """
-        Processes an event, searching event tables and calling zero or more
-        suitable event handler function(s).
+        Processes an event, routing menu commands through the document
+        manager before searching the event tables.
+        """
+        return _ProcessFrameEvent(self, wx.MDIParentFrame, event)
+
+
+    def _RouteEvent(self, event):
+        """
+        Routes a menu command through the document manager.
         """
         return self._docManager and self._docManager.ProcessEvent(event)
 
@@ -2681,7 +2727,7 @@ class DocMDIParentFrame(wx.MDIParentFrame):
             msgTitle = wx.GetApp().GetAppName()
             if not msgTitle:
                 msgTitle = _("File Error")
-            wx.MessageBox("The file '%s' doesn't exist and couldn't be opened.\nIt has been removed from the most recently used files list" % FileNameFromPath(file),
+            wx.MessageBox("The file '%s' doesn't exist and couldn't be opened.\nIt has been removed from the most recently used files list" % FileNameFromPath(filename),
                           msgTitle,
                           wx.OK | wx.ICON_EXCLAMATION,
                           self)
@@ -2727,7 +2773,7 @@ class DocMDIChildFrame(wx.MDIChildFrame):
         self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
 
         if frame:  # wxBug: For some reason the EVT_ACTIVATE event is not getting triggered for the first mdi client window that is opened so we have to do it manually
-            mdiChildren = filter(lambda x: isinstance(x, wx.MDIChildFrame), frame.GetChildren())
+            mdiChildren = [x for x in frame.GetChildren() if isinstance(x, wx.MDIChildFrame)]
             if len(mdiChildren) == 1:
                 self.Activate()
 
@@ -2752,10 +2798,17 @@ class DocMDIChildFrame(wx.MDIChildFrame):
             self._childView.Activate(True)
 
 
-    def ProcessEvent(event):
+    def ProcessEvent(self, event):
         """
-        Processes an event, searching event tables and calling zero or more
-        suitable event handler function(s).
+        Processes an event, routing menu commands through the view and the
+        parent frame before searching the event tables.
+        """
+        return _ProcessFrameEvent(self, wx.MDIChildFrame, event)
+
+
+    def _RouteEvent(self, event):
+        """
+        Routes a menu command through the view and the parent frame.
         """
         if self._activeEvent == event:
             return False
@@ -3130,15 +3183,15 @@ class CommandProcessor(wx.Object):
             else:
                 redoAccel = ''
             if undoCommand and undoItem and undoCommand.CanUndo():
-                undoItem.SetText(_("&Undo ") + undoCommand.GetName() + undoAccel)
+                undoItem.SetItemLabel(_("&Undo ") + undoCommand.GetName() + undoAccel)
             #elif undoCommand and not undoCommand.CanUndo():
             #    undoItem.SetText(_("Can't Undo") + undoAccel)
-            else:
-                undoItem.SetText(_("&Undo" + undoAccel))
+            elif undoItem:
+                undoItem.SetItemLabel(_("&Undo") + undoAccel)
             if redoCommand and redoItem:
-                redoItem.SetText(_("&Redo ") + redoCommand.GetName() + redoAccel)
-            else:
-                redoItem.SetText(_("&Redo") + redoAccel)
+                redoItem.SetItemLabel(_("&Redo ") + redoCommand.GetName() + redoAccel)
+            elif redoItem:
+                redoItem.SetItemLabel(_("&Redo") + redoAccel)
 
 
     def CanUndo(self):
