@@ -404,28 +404,11 @@ def build(bld):
     )
     makeExtCopyRule(bld, 'siplib')
 
-    # Add build rules for each of our ETG generated extension modules
-    makeETGRule(bld, 'etg/_core.py',       '_core',      'WX')
-    makeETGRule(bld, 'etg/_adv.py',        '_adv',       'WXADV')
-    makeETGRule(bld, 'etg/_dataview.py',   '_dataview',  'WXADV')
-    makeETGRule(bld, 'etg/_grid.py',       '_grid',      'WXADV')
-    makeETGRule(bld, 'etg/_stc.py',        '_stc',       'WXSTC')
-    makeETGRule(bld, 'etg/_html.py',       '_html',      'WXHTML')
-    makeETGRule(bld, 'etg/_glcanvas.py',   '_glcanvas',  'WXGL')
-    makeETGRule(bld, 'etg/_html2.py',      '_html2',     'WXWEBVIEW')
-    makeETGRule(bld, 'etg/_xml.py',        '_xml',       'WXXML')
-    makeETGRule(bld, 'etg/_xrc.py',        '_xrc',       'WXXRC')
-    makeETGRule(bld, 'etg/_richtext.py',   '_richtext',  'WXHTML WXRICHTEXT')
-    makeETGRule(bld, 'etg/_media.py',      '_media',     'WXMEDIA')
-    makeETGRule(bld, 'etg/_ribbon.py',     '_ribbon',    'WXRIBBON')
-    makeETGRule(bld, 'etg/_propgrid.py',   '_propgrid',  'WXPROPGRID')
-    makeETGRule(bld, 'etg/_aui.py',        '_aui',       'WXAUI')
-
-    # Modules that are platform-specific
-    if isWindows:
-        makeETGRule(bld, 'etg/_msw.py',    '_msw',       'WX')
-
-    # ** Add code for new modules here
+    # Add build rules for each of our ETG generated extension modules. New
+    # modules are added to ETG_MODULES in buildtools/config.py.
+    from buildtools.config import ETG_MODULES
+    for moduleName, libFlags in ETG_MODULES:
+        makeETGRule(bld, 'etg/{}.py'.format(moduleName), moduleName, libFlags)
 
 
 #-----------------------------------------------------------------------------
